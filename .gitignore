@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+*.log
+*.aux
+*.bbl
+*.blg
+*.out
+*.synctex.gz
+*.pdf
+.DS_Store

@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sudoku-sat-solving"
+version = "0.1.0"
+description = "Sudoku SAT encoding and exact solver comparison research scaffold"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [] # TODO: Add dependencies after each solver is implemented.
+
+[tool.setuptools.packages.find]
+where = ["src"]
