@@ -1,1 +1,5 @@
-"""TODO: Define a common result/status interface for every solver."""
+"""Solver adapters share the same result contract."""
+
+from .base import SolveResult, SolveStatus
+
+__all__ = ["SolveResult", "SolveStatus"]
