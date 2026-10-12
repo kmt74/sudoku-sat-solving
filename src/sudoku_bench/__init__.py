@@ -1,1 +1,1 @@
-"""TODO: Public interfaces for the Sudoku benchmark package."""
+"""Sudoku exact-solver comparison: puzzle IO, models, solvers and benchmark."""

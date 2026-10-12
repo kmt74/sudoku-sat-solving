@@ -1,8 +1,10 @@
 """Check sequential AMO semantics and SAT Sudoku model construction."""
 
 import itertools
+import importlib.util
 import unittest
 
+from sudoku_bench.encodings import ENCODINGS
 from sudoku_bench.encodings.sequential import at_most_one
 from sudoku_bench.models.sat import build_sat_model, cell_variable, decode_sat_model
 from sudoku_bench.puzzle import Puzzle
@@ -67,6 +69,31 @@ class SequentialEncodingTests(unittest.TestCase):
                 )
                 with self.subTest(count=count, bits=bits):
                     self.assertEqual(has_extension, sum(bits) <= 1)
+
+
+@unittest.skipUnless(importlib.util.find_spec("pysat"), "install python-sat")
+class AllEncodingTests(unittest.TestCase):
+    def test_every_encoding_has_exact_amo_projection(self) -> None:
+        from pysat.solvers import Solver
+
+        for name, encode in ENCODINGS.items():
+            for count in range(0, 7):
+                next_id = count + 1
+
+                def new_var() -> int:
+                    nonlocal next_id
+                    variable = next_id
+                    next_id += 1
+                    return variable
+
+                clauses = encode(tuple(range(1, count + 1)), new_var)
+                with Solver(name="g3", bootstrap_with=clauses) as solver:
+                    for bits in itertools.product((False, True), repeat=count):
+                        assumptions = [index if bit else -index
+                                       for index, bit in enumerate(bits, start=1)]
+                        with self.subTest(encoding=name, count=count, bits=bits):
+                            self.assertEqual(solver.solve(assumptions=assumptions),
+                                             sum(bits) <= 1)
 
 
 class SatModelTests(unittest.TestCase):

@@ -55,10 +55,14 @@ class PuzzleTests(unittest.TestCase):
     def test_loads_json_puzzle(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "example.json"
-            path.write_text(json.dumps({"id": "example", "grid": PUZZLE_ROWS}), encoding="utf-8")
+            path.write_text(json.dumps({"id": "example", "grid": PUZZLE_ROWS,
+                                        "source": "unit test", "difficulty": "easy"}),
+                            encoding="utf-8")
             puzzle = load_puzzle(path)
         self.assertEqual(puzzle.puzzle_id, "example")
         self.assertEqual(puzzle.size, 4)
+        self.assertEqual(puzzle.source, "unit test")
+        self.assertEqual(puzzle.difficulty, "easy")
 
 
 class ValidatorTests(unittest.TestCase):

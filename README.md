@@ -1,86 +1,123 @@
 # Sudoku SAT Solving
 
-Khung mã nguồn cho bài tập lớn so sánh các phương pháp giải Sudoku. Đã có định dạng đề, bộ kiểm tra nghiệm, kiểu kết quả chung và SAT solver đầu tiên dùng sequential counter. Chưa cài đặt các solver khác, bộ dữ liệu benchmark hay kết quả thực nghiệm.
+Mã nguồn cho bài tập so sánh các phương pháp giải chính xác Sudoku: SAT, CP, MIP và CP-SAT. Chương trình nhận bảng `N×N` với `N` là số chính phương, dùng `0` cho ô trống, và kiểm tra độc lập mọi nghiệm trước khi ghi kết quả.
 
-## Phạm vi
+## Các cấu hình đã cài
 
-- Bài toán: tìm một nghiệm Sudoku hợp lệ hoặc xác định vô nghiệm.
-- Năm cấu hình chính: SAT/PySAT, IBM CP Optimizer, IBM CPLEX MIP, Gurobi MIP và OR-Tools CP-SAT.
-- Phân tích mở rộng: bốn encoding SAT `binary`, `commander`, `product`, `sequential` được đề khuyến khích. Các encoding này không phải bốn họ phương pháp riêng.
-- Mọi cấu hình phải chạy trên cùng bộ đề và được kiểm tra nghiệm bằng `validator.py`.
+| Tên chạy | Mô hình | Bộ giải |
+|---|---|---|
+| `sat-binary` | CNF, AMO binary/bitwise | PySAT Glucose3 |
+| `sat-commander` | CNF, AMO commander | PySAT Glucose3 |
+| `sat-product` | CNF, AMO 2-product | PySAT Glucose3 |
+| `sat-sequential` | CNF, AMO sequential counter | PySAT Glucose3 |
+| `cp-optimizer` | Biến nguyên và `all_diff` | IBM CP Optimizer |
+| `cplex-mip` | Biến nhị phân `x[r,c,d]` | IBM CPLEX MIP |
+| `gurobi-mip` | Cùng công thức MIP với CPLEX | Gurobi |
+| `cp-sat` | Biến nguyên và `AddAllDifferent` | OR-Tools CP-SAT |
 
-## Sơ đồ mã nguồn
+Với SAT, mỗi ràng buộc “đúng một” gồm một mệnh đề ALO và một encoding AMO. Có bốn nhóm ràng buộc: ô, chữ số trong hàng, chữ số trong cột và chữ số trong khối. Hai MIP cùng dùng các nhóm biến/ràng buộc từ `models/mip.py`.
 
-| Thành phần | Vai trò |
-|---|---|
-| `src/sudoku_bench/puzzle.py` | Đọc, lưu và kiểm tra định dạng đề Sudoku. |
-| `src/sudoku_bench/validator.py` | Kiểm tra nghiệm độc lập với solver. |
-| `src/sudoku_bench/solvers/base.py` | Kiểu kết quả và trạng thái dùng chung cho các solver. |
-| `src/sudoku_bench/models/` | Xây mô hình toán/SAT cho từng họ phương pháp. |
-| `src/sudoku_bench/encodings/` | Các cách mã hóa ràng buộc AMO cho SAT. |
-| `src/sudoku_bench/solvers/` | Gọi từng bộ giải và chuyển kết quả về định dạng chung. |
-| `src/sudoku_bench/benchmark.py` | Chạy cùng bộ đề, đo thời gian, ghi kết quả gốc. |
-| `data/` | Bộ đề 9×9, 16×16 và 25×25 (nếu khả thi). |
-| `tests/` | Kiểm thử tính đúng của dữ liệu, encoding và nghiệm. |
-| `results/` | Kết quả gốc, bảng tổng hợp và biểu đồ. |
-| `scripts/` | Lệnh chạy toàn bộ và tổng hợp kết quả. |
-| `report/` | Mã nguồn báo cáo dạng bài báo khoa học. |
+## Cài đặt trên Windows
 
-## TODO theo thứ tự
+Từ thư mục gốc repo, dùng Python 3.11 trở lên:
 
-- [x] Định nghĩa định dạng đầu vào/đầu ra chung và cài `puzzle.py`, `validator.py`.
-- [x] Cài mô hình SAT và encoding AMO sequential counter.
-- [ ] Cài CP Optimizer, CPLEX MIP, Gurobi MIP, CP-SAT.
-- [ ] Thêm các encoding SAT còn lại để làm thí nghiệm mở rộng.
-- [ ] Thu thập bộ đề, ghi nguồn và chia nhóm kích thước/độ khó.
-- [ ] Chạy benchmark công bằng, lưu cả timeout và lỗi.
-- [ ] Viết báo cáo và dẫn link repository ở mục Data Availability.
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -e ".[all]"
+.\.venv\Scripts\python.exe scripts/check_setup.py
+```
 
-## Nguyên tắc thực nghiệm
+Nếu chỉ muốn chạy SAT và CP-SAT, có thể cài `-e ".[ortools]"`. Package SAT (`python-sat`) là phụ thuộc mặc định. Các gói `docplex`, `cplex` và `gurobipy` được cài bằng extra `all`; **cài package không đồng nghĩa đã có license đầy đủ**.
 
-Giữ cùng bộ đề, giới hạn thời gian và điều kiện máy cho mọi cấu hình. Tách thời gian xây mô hình khỏi thời gian giải. Kiểm tra mọi nghiệm bằng bộ xác thực độc lập. CPLEX MIP và Gurobi MIP phải dùng cùng công thức toán để so sánh bộ giải. Không coi timeout là vô nghiệm.
+### CP Optimizer và license thương mại
 
-## Giao diện chung
+`docplex.cp` cần chương trình `cpoptimizer.exe` từ IBM ILOG CPLEX Optimization Studio. Chỉ cài `docplex`/`cplex` bằng pip không cung cấp chương trình này. Sau khi cài Optimization Studio, đặt biến môi trường trong PowerShell (thay bằng đường dẫn cài thực tế):
 
-Đề được lưu dạng JSON. `N` là số chính phương (`4`, `9`, `16`, `25`, ...); bảng có `N` hàng, mỗi hàng `N` ô. Số `0` biểu thị ô trống. Các số gợi ý phải thuộc `1…N` và không được trùng nhau trong cùng hàng, cột hoặc khối.
+```powershell
+$studio = 'C:\Program Files\IBM\ILOG\CPLEX_Studio222'
+$env:CP_OPTIMIZER_EXECUTABLE = Join-Path $studio 'cpoptimizer\bin\x64_win64\cpoptimizer.exe'
+$env:PATH = (Join-Path $studio 'cpoptimizer\bin\x64_win64') + ';' + (Join-Path $studio 'cplex\bin\x64_win64') + ';' + $env:PATH
+.\.venv\Scripts\python.exe scripts/check_setup.py
+```
+
+Nếu đã cài **bản Academic hoặc bản đầy đủ**, nâng runtime CPLEX bên trong `.venv` để giải mô hình MIP lớn hơn giới hạn Community:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install setuptools
+.\.venv\Scripts\docplex.exe config --upgrade $studio
+```
+
+Trên Windows, `cpoptimizer.exe` có thể không khởi động được nếu thiếu thư mục DLL của IBM trong `PATH` (lỗi `Nothing to read from local solver process`). Khi chỉnh biến môi trường người dùng, mở lại PowerShell/IDE để cửa sổ mới nhận cấu hình. Nếu tạo lại `.venv`, hãy chạy lại lệnh `docplex config --upgrade`.
+
+CPLEX và Gurobi ở license giới hạn có thể giải 9×9 nhưng báo `ERROR` cho MIP 16×16/25×25 vì mô hình vượt giới hạn kích thước. Cần license học thuật/đầy đủ của hãng để thực nghiệm MIP kích thước lớn. Mã ghi đúng thông báo lỗi vào kết quả, không đổi lỗi license thành `TIMEOUT` hay `UNSAT`. Xem [DOcplex/CP Optimizer setup](https://ibmdecisionoptimization.github.io/docplex-doc/getting_started.html) và [Gurobi licensing](https://www.gurobi.com/academia/academic-program-and-licenses/).
+
+## Chạy thử
+
+Giải một đề 9×9 bằng SAT:
+
+```powershell
+.\.venv\Scripts\python.exe -m sudoku_bench.solvers.pysat_solver data/9x9/example.json --encoding sequential --time-limit 30
+```
+
+Chạy cả tám cấu hình trên đề 9×9 (mặc định mỗi lần giải tối đa 30 giây):
+
+```powershell
+.\.venv\Scripts\python.exe scripts/run_all.py --data data/9x9 --repeats 3 --time-limit 30
+```
+
+Chạy nhóm có thể hoạt động trên 16×16/25×25 mà không cần license MIP lớn:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/run_all.py --data data/16x16 --methods sat-binary sat-commander sat-product sat-sequential cp-sat --time-limit 30
+.\.venv\Scripts\python.exe scripts/run_all.py --data data/25x25 --methods sat-binary sat-commander sat-product sat-sequential cp-sat --time-limit 30
+```
+
+`--data` nhận một file JSON hoặc một thư mục (đọc đệ quy). `--methods` chọn cấu hình, `--seed` cố định thứ tự ngẫu nhiên của các phương pháp, `--output` chọn file kết quả. Mỗi solver dùng một luồng xử lý; giới hạn thời gian áp dụng cho **pha giải**, còn thời gian tạo mô hình được đo riêng.
+
+Kết quả gốc là JSONL trong `results/raw/`: dòng đầu ghi môi trường/phụ thuộc, các dòng sau ghi từng lượt chạy, trạng thái, thời gian, số biến/ràng buộc và nghiệm. Để có bảng CSV sơ bộ:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/summarize.py results/raw/<tên-file>.jsonl
+```
+
+Chỉ các lượt `SOLVED` có nghiệm hợp lệ được tính trong trung vị thời gian. `UNSAT`, `TIMEOUT` và `ERROR` được đếm riêng.
+
+## Dữ liệu và kiểm thử
+
+Định dạng đề:
 
 ```json
 {
   "id": "example-4x4",
-  "grid": [
-    [1, 0, 0, 4],
-    [0, 4, 1, 0],
-    [0, 1, 4, 0],
-    [4, 0, 0, 1]
-  ]
+  "grid": [[1, 0, 0, 4], [0, 4, 1, 0], [0, 1, 4, 0], [4, 0, 0, 1]]
 }
 ```
 
-`load_puzzle(path)` đọc và kiểm tra đề. `Puzzle.from_rows(rows)` tạo đề trực tiếp. `validate_solution(puzzle, solution)` trả `True` khi nghiệm đầy đủ, đúng gợi ý, và mỗi hàng/cột/khối chứa đúng `1…N`; nếu không trả `False`.
+`puzzle.py` từ chối đề sai kích thước, giá trị hoặc mâu thuẫn giữa các ô gợi ý. `validator.py` kiểm tra bảng nghiệm không phụ thuộc solver. `data/9x9/example.json` và các file `smoke-seed0.json` 16×16/25×25 là **đề thử đường chạy**, chưa phải bộ benchmark cân bằng theo độ khó. Tạo lại đề smoke bằng:
 
-Mỗi solver sau này trả một `SolveResult` gồm `status`, `solution`, `build_time_s`, `solve_time_s` và `message` tùy chọn. `status` thuộc `SOLVED`, `UNSAT`, `TIMEOUT`, `ERROR`. Chỉ `SOLVED` có nghiệm; thời gian tính bằng giây, không âm. `UNSAT` chỉ dùng khi solver chứng minh vô nghiệm; hết hạn chạy phải là `TIMEOUT`.
-
-Chạy kiểm thử cơ bản:
+Mỗi JSON có thể thêm `source`, `difficulty`, `kind`; benchmark chép các trường này vào kết quả gốc để bạn lọc và trích dẫn bộ đề khi viết báo cáo.
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
-python -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe scripts/generate_smoke.py --sizes 16 25 --blanks-per-row 2 --seed 0
 ```
 
-## Chạy SAT trên một đề
+Khi làm báo cáo, hãy bổ sung bộ đề có nguồn, nhóm kích thước/độ khó và chính sách chọn mẫu rõ ràng. Đừng dùng thời gian trên đề gần hoàn chỉnh này để kết luận phương pháp nào nhanh hơn nói chung.
 
-Cài gói trong môi trường ảo bằng Python 3.11 trở lên:
+Chạy kiểm thử:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e .
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-Giải đề 9×9 minh họa:
+## Cấu trúc
 
-```powershell
-python -m sudoku_bench.solvers.pysat_solver data/9x9/example.json
-```
+- `src/sudoku_bench/puzzle.py`, `validator.py`: định dạng đề và kiểm nghiệm.
+- `src/sudoku_bench/encodings/`: bốn AMO encoding.
+- `src/sudoku_bench/models/`: công thức SAT, CP, MIP, CP-SAT.
+- `src/sudoku_bench/solvers/`: adapter trả chung `SolveResult`.
+- `src/sudoku_bench/benchmark.py`: chạy cùng bộ đề, giới hạn thời gian, kiểm tra nghiệm, ghi kết quả.
+- `scripts/`: lệnh kiểm tra setup, tạo đề smoke, chạy benchmark, tổng hợp CSV.
+- `report/`: khung báo cáo để hoàn thiện sau.
 
-Lệnh in trạng thái, thời gian tạo mô hình, thời gian giải và bảng nghiệm nếu có. Mô hình dùng biến `x[r,c,d]` cho việc ô `(r,c)` nhận chữ số `d`; ràng buộc đúng một áp dụng cho ô, chữ số trong hàng, cột và khối. Mỗi ràng buộc gồm một mệnh đề ít nhất một và encoding sequential counter cho nhiều nhất một. Tệp `data/9x9/example.json` chỉ là đề minh họa, chưa thuộc bộ benchmark.
+`SolveResult.status` thuộc `SOLVED`, `UNSAT`, `TIMEOUT`, `ERROR`. `UNSAT` chỉ dùng khi solver chứng minh vô nghiệm. Trường hợp tìm được nghiệm hợp lệ ngay trước giới hạn thời gian vẫn là `SOLVED`; trường hợp thiếu phần mềm/license là `ERROR`.
