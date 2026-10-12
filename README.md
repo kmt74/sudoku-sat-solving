@@ -39,6 +39,17 @@ $env:CP_OPTIMIZER_EXECUTABLE = "<đường dẫn đầy đủ tới cpoptimizer.
 .\.venv\Scripts\python.exe scripts/check_setup.py
 ```
 
+Trên Windows, `cpoptimizer.exe` có thể không khởi động được nếu thiếu thư mục DLL của IBM trong `PATH` (lỗi `Nothing to read from local solver process`). Khi đó, thêm cả hai thư mục `cpoptimizer\bin\x64_win64` và `cplex\bin\x64_win64` của bản cài trước khi chạy. Ví dụ nếu cài Studio tại `D:\Applications`:
+
+```powershell
+$studio = 'D:\Applications'
+$env:CP_OPTIMIZER_EXECUTABLE = Join-Path $studio 'cpoptimizer\bin\x64_win64\cpoptimizer.exe'
+$env:PATH = (Join-Path $studio 'cpoptimizer\bin\x64_win64') + ';' + (Join-Path $studio 'cplex\bin\x64_win64') + ';' + $env:PATH
+.\.venv\Scripts\python.exe scripts/check_setup.py
+```
+
+Đường dẫn trong ví dụ phải đổi theo nơi bạn cài IBM. Sau khi chỉnh biến môi trường người dùng trên Windows, mở lại PowerShell/IDE để cửa sổ mới nhận cấu hình.
+
 CPLEX và Gurobi ở license giới hạn có thể giải 9×9 nhưng báo `ERROR` cho MIP 16×16/25×25 vì mô hình vượt giới hạn kích thước. Cần license học thuật/đầy đủ của hãng để thực nghiệm MIP kích thước lớn. Mã ghi đúng thông báo lỗi vào kết quả, không đổi lỗi license thành `TIMEOUT` hay `UNSAT`. Xem [DOcplex/CP Optimizer setup](https://ibmdecisionoptimization.github.io/docplex-doc/getting_started.html) và [Gurobi licensing](https://www.gurobi.com/academia/academic-program-and-licenses/).
 
 ## Chạy thử
