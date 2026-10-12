@@ -81,9 +81,13 @@ class PySatSolverTests(unittest.TestCase):
     def test_solves_9x9_json(self) -> None:
         path = Path(__file__).resolve().parents[1] / "data" / "9x9" / "example.json"
         puzzle = load_puzzle(path)
-        result = solve_sat(puzzle)
-        self.assertEqual(result.status, SolveStatus.SOLVED, result.message)
-        self.assertTrue(validate_solution(puzzle, result.solution))
+        for encoding in ("binary", "commander", "product", "sequential"):
+            with self.subTest(encoding=encoding):
+                result = solve_sat(puzzle, encoding=encoding, time_limit_s=5)
+                self.assertEqual(result.status, SolveStatus.SOLVED, result.message)
+                self.assertTrue(validate_solution(puzzle, result.solution))
+                self.assertGreater(result.model_variables, 0)
+                self.assertGreater(result.model_constraints, 0)
 
     def test_reports_unsat_for_consistent_but_impossible_clues(self) -> None:
         puzzle = Puzzle.from_rows([

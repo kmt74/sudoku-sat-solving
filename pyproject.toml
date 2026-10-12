@@ -10,5 +10,11 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = ["python-sat>=1.8.dev13"]
 
+[project.optional-dependencies]
+ortools = ["ortools>=9.10"]
+ibm = ["docplex>=2.25", "cplex>=22.1"]
+gurobi = ["gurobipy>=11"]
+all = ["ortools>=9.10", "docplex>=2.25", "cplex>=22.1", "gurobipy>=11"]
+
 [tool.setuptools.packages.find]
 where = ["src"]

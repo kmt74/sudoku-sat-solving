@@ -1,8 +1,8 @@
-"""Build a Sudoku SAT formula with sequential at-most-one constraints."""
+"""Build a Sudoku SAT formula with selectable at-most-one encoding."""
 
 from dataclasses import dataclass
 
-from sudoku_bench.encodings.sequential import at_most_one
+from sudoku_bench.encodings import ENCODINGS
 from sudoku_bench.puzzle import Grid, Puzzle
 
 
@@ -19,14 +19,18 @@ class SatModel:
     size: int
     clauses: tuple[Clause, ...]
     variable_count: int
+    encoding: str
 
     @property
     def clause_count(self) -> int:
         return len(self.clauses)
 
 
-def build_sat_model(puzzle: Puzzle) -> SatModel:
+def build_sat_model(puzzle: Puzzle, encoding: str = "sequential") -> SatModel:
     """Encode each cell and each digit in a row, column and box exactly once."""
+    if encoding not in ENCODINGS:
+        raise ValueError(f"unknown SAT encoding: {encoding}")
+    at_most_one = ENCODINGS[encoding]
     size = puzzle.size
     box_size = puzzle.box_size
     clauses: list[Clause] = []
@@ -67,7 +71,8 @@ def build_sat_model(puzzle: Puzzle) -> SatModel:
             if clue:
                 clauses.append((cell_variable(size, row, column, clue),))
 
-    return SatModel(size=size, clauses=tuple(clauses), variable_count=next_variable - 1)
+    return SatModel(size=size, clauses=tuple(clauses), variable_count=next_variable - 1,
+                    encoding=encoding)
 
 
 def decode_sat_model(size: int, assignment: list[int]) -> Grid:

@@ -1,1 +1,1 @@
-"""TODO: Mathematical models and SAT formula builders."""
+"""Mathematical models for SAT, CP Optimizer, MIP and CP-SAT."""
