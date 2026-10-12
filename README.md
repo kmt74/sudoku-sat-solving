@@ -32,23 +32,23 @@ Nếu chỉ muốn chạy SAT và CP-SAT, có thể cài `-e ".[ortools]"`. Pack
 
 ### CP Optimizer và license thương mại
 
-`docplex.cp` cần chương trình `cpoptimizer.exe` từ IBM ILOG CPLEX Optimization Studio. Chỉ cài `docplex`/`cplex` bằng pip không cung cấp chương trình này. Sau khi cài Optimization Studio, đặt biến môi trường trong PowerShell (thay bằng đường dẫn thật):
+`docplex.cp` cần chương trình `cpoptimizer.exe` từ IBM ILOG CPLEX Optimization Studio. Chỉ cài `docplex`/`cplex` bằng pip không cung cấp chương trình này. Sau khi cài Optimization Studio, đặt biến môi trường trong PowerShell (thay bằng đường dẫn cài thực tế):
 
 ```powershell
-$env:CP_OPTIMIZER_EXECUTABLE = "<đường dẫn đầy đủ tới cpoptimizer.exe>"
-.\.venv\Scripts\python.exe scripts/check_setup.py
-```
-
-Trên Windows, `cpoptimizer.exe` có thể không khởi động được nếu thiếu thư mục DLL của IBM trong `PATH` (lỗi `Nothing to read from local solver process`). Khi đó, thêm cả hai thư mục `cpoptimizer\bin\x64_win64` và `cplex\bin\x64_win64` của bản cài trước khi chạy. Ví dụ nếu cài Studio tại `D:\Applications`:
-
-```powershell
-$studio = 'D:\Applications'
+$studio = 'C:\Program Files\IBM\ILOG\CPLEX_Studio222'
 $env:CP_OPTIMIZER_EXECUTABLE = Join-Path $studio 'cpoptimizer\bin\x64_win64\cpoptimizer.exe'
 $env:PATH = (Join-Path $studio 'cpoptimizer\bin\x64_win64') + ';' + (Join-Path $studio 'cplex\bin\x64_win64') + ';' + $env:PATH
 .\.venv\Scripts\python.exe scripts/check_setup.py
 ```
 
-Đường dẫn trong ví dụ phải đổi theo nơi bạn cài IBM. Sau khi chỉnh biến môi trường người dùng trên Windows, mở lại PowerShell/IDE để cửa sổ mới nhận cấu hình.
+Nếu đã cài **bản Academic hoặc bản đầy đủ**, nâng runtime CPLEX bên trong `.venv` để giải mô hình MIP lớn hơn giới hạn Community:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install setuptools
+.\.venv\Scripts\docplex.exe config --upgrade $studio
+```
+
+Trên Windows, `cpoptimizer.exe` có thể không khởi động được nếu thiếu thư mục DLL của IBM trong `PATH` (lỗi `Nothing to read from local solver process`). Khi chỉnh biến môi trường người dùng, mở lại PowerShell/IDE để cửa sổ mới nhận cấu hình. Nếu tạo lại `.venv`, hãy chạy lại lệnh `docplex config --upgrade`.
 
 CPLEX và Gurobi ở license giới hạn có thể giải 9×9 nhưng báo `ERROR` cho MIP 16×16/25×25 vì mô hình vượt giới hạn kích thước. Cần license học thuật/đầy đủ của hãng để thực nghiệm MIP kích thước lớn. Mã ghi đúng thông báo lỗi vào kết quả, không đổi lỗi license thành `TIMEOUT` hay `UNSAT`. Xem [DOcplex/CP Optimizer setup](https://ibmdecisionoptimization.github.io/docplex-doc/getting_started.html) và [Gurobi licensing](https://www.gurobi.com/academia/academic-program-and-licenses/).
 
