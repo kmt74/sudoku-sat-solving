@@ -10,6 +10,7 @@ from statistics import median
 
 FIELDS = ("size", "method", "puzzles", "attempts", "solved", "unsat", "timeout",
           "error", "solved_rate", "median_build_s", "median_solve_s", "median_total_s",
+          "median_attempt_wall_s", "median_peak_rss_mib", "max_peak_rss_mib",
           "median_model_variables", "median_model_constraints")
 
 
@@ -30,6 +31,10 @@ def summarize_file(raw_path: str | Path, output_path: str | Path) -> list[dict]:
                            if row.get("model_variables") is not None]
         constraint_counts = [row["model_constraints"] for row in rows
                              if row.get("model_constraints") is not None]
+        memory_bytes = [row["peak_rss_bytes"] for row in rows
+                        if row["status"] != "ERROR" and row.get("peak_rss_bytes") is not None]
+        wall_times = [row["attempt_wall_s"] for row in solved_rows
+                      if row.get("attempt_wall_s") is not None]
         summary.append({
             "size": size, "method": method,
             "puzzles": len({row["puzzle_path"] for row in rows}),
@@ -44,6 +49,9 @@ def summarize_file(raw_path: str | Path, output_path: str | Path) -> list[dict]:
             if solved_rows else "",
             "median_total_s": median(row["total_time_s"] for row in solved_rows)
             if solved_rows else "",
+            "median_attempt_wall_s": median(wall_times) if wall_times else "",
+            "median_peak_rss_mib": median(memory_bytes) / 1048576 if memory_bytes else "",
+            "max_peak_rss_mib": max(memory_bytes) / 1048576 if memory_bytes else "",
             "median_model_variables": median(variable_counts) if variable_counts else "",
             "median_model_constraints": median(constraint_counts) if constraint_counts else "",
         })

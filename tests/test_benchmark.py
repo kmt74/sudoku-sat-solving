@@ -24,11 +24,36 @@ class BenchmarkTests(unittest.TestCase):
             self.assertEqual(len(lines), 3)
             self.assertTrue(all(row["status"] == "SOLVED" and row["solution_valid"]
                                 for row in records))
+            self.assertTrue(all(row["attempt_wall_s"] >= 0 for row in records))
+            self.assertTrue(all(row["peak_rss_bytes"] is None for row in records))
+            self.assertTrue(all(row["peak_child_rss_bytes"] is None for row in records))
             summary = summarize_file(raw, output)
             self.assertEqual(summary[0]["solved"], 2)
             self.assertEqual(summary[0]["error"], 0)
             self.assertGreater(summary[0]["median_model_variables"], 0)
             self.assertTrue(output.exists())
+
+    def test_isolated_memory_measurement(self) -> None:
+        from scripts.summarize import summarize_file
+
+        puzzle = Path(__file__).resolve().parents[1] / "data" / "9x9" / "example.json"
+        with tempfile.TemporaryDirectory() as directory:
+            raw = Path(directory) / "raw.jsonl"
+            summary_path = Path(directory) / "summary.csv"
+            records = run_benchmark([puzzle], raw, methods=["sat-sequential"],
+                                    time_limit_s=5, measure_memory=True)
+            meta = json.loads(raw.read_text(encoding="utf-8").splitlines()[0])
+            summary = summarize_file(raw, summary_path)[0]
+        row = records[0]
+        self.assertEqual(meta["measurement_mode"], "isolated-process-tree")
+        self.assertEqual(row["status"], "SOLVED")
+        self.assertTrue(row["solution_valid"])
+        self.assertGreater(row["peak_rss_bytes"], 0)
+        self.assertGreaterEqual(row["peak_child_rss_bytes"], 0)
+        self.assertGreater(row["memory_samples"], 0)
+        self.assertGreaterEqual(row["attempt_wall_s"], row["total_time_s"])
+        self.assertGreater(summary["median_peak_rss_mib"], 0)
+        self.assertGreater(summary["median_attempt_wall_s"], 0)
 
     def test_discovers_puzzles_and_rejects_empty_runs(self) -> None:
         root = Path(__file__).resolve().parents[1] / "data" / "9x9"

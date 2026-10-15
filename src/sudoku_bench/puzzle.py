@@ -35,6 +35,7 @@ class Puzzle:
     source: str | None = None
     difficulty: str | None = None
     kind: str | None = None
+    hardness_level: str | None = None
 
     def __post_init__(self) -> None:
         grid = _as_grid(self.grid)
@@ -42,7 +43,7 @@ class Puzzle:
 
         if not isinstance(self.puzzle_id, str):
             raise ValueError("puzzle_id must be a string")
-        for name in ("source", "difficulty", "kind"):
+        for name in ("source", "difficulty", "kind", "hardness_level"):
             value = getattr(self, name)
             if value is not None and not isinstance(value, str):
                 raise ValueError(f"{name} must be a string or null")
@@ -87,9 +88,9 @@ class Puzzle:
     @classmethod
     def from_rows(cls, rows: Iterable[Iterable[int]], puzzle_id: str = "",
                   source: str | None = None, difficulty: str | None = None,
-                  kind: str | None = None) -> Puzzle:
+                  kind: str | None = None, hardness_level: str | None = None) -> Puzzle:
         return cls(_as_grid(rows), puzzle_id=puzzle_id, source=source,
-                   difficulty=difficulty, kind=kind)
+                   difficulty=difficulty, kind=kind, hardness_level=hardness_level)
 
 
 def load_puzzle(path: str | Path) -> Puzzle:
@@ -100,4 +101,5 @@ def load_puzzle(path: str | Path) -> Puzzle:
         raise ValueError("puzzle JSON must be an object with a grid field")
     return Puzzle.from_rows(data["grid"], puzzle_id=data.get("id", source.stem),
                             source=data.get("source"), difficulty=data.get("difficulty"),
-                            kind=data.get("kind"))
+                            kind=data.get("kind"),
+                            hardness_level=data.get("hardness_level"))
