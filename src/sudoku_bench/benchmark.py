@@ -8,12 +8,14 @@ import os
 import platform
 import random
 import sys
+from time import perf_counter
 from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 from sudoku_bench.puzzle import Puzzle, load_puzzle
+from sudoku_bench.isolated_run import SAMPLE_INTERVAL_S, run_isolated
 from sudoku_bench.solvers.base import SolveResult, SolveStatus
 from sudoku_bench.solvers.cplex_cp import solve_cplex_cp
 from sudoku_bench.solvers.cplex_mip import solve_cplex_mip
@@ -56,7 +58,7 @@ def discover_puzzles(path: str | Path) -> list[Path]:
 
 
 def _package_versions() -> dict[str, str | None]:
-    packages = ("python-sat", "ortools", "docplex", "cplex", "gurobipy")
+    packages = ("python-sat", "ortools", "docplex", "cplex", "gurobipy", "psutil")
     found: dict[str, str | None] = {}
     for package in packages:
         try:
@@ -69,7 +71,8 @@ def _package_versions() -> dict[str, str | None]:
 def run_benchmark(puzzle_paths: Sequence[str | Path], output_path: str | Path,
                   methods: Sequence[str] = ALL_METHODS, repeats: int = 1,
                   time_limit_s: float = 30.0, seed: int = 0,
-                  on_record: Callable[[dict], None] | None = None) -> list[dict]:
+                  on_record: Callable[[dict], None] | None = None,
+                  measure_memory: bool = False) -> list[dict]:
     """Write JSON Lines, with one metadata header and one row per solver attempt."""
     if repeats < 1 or not math.isfinite(time_limit_s) or time_limit_s <= 0:
         raise ValueError("repeats and time_limit_s must be positive")
@@ -91,6 +94,8 @@ def run_benchmark(puzzle_paths: Sequence[str | Path], output_path: str | Path,
         "logical_cpus": os.cpu_count(),
         "packages": _package_versions(), "methods": list(methods),
         "repeats": repeats, "time_limit_s": time_limit_s, "seed": seed,
+        "measurement_mode": "isolated-process-tree" if measure_memory else "in-process",
+        "memory_sample_interval_s": SAMPLE_INTERVAL_S if measure_memory else None,
         "puzzles": [str(path) for path, _ in puzzles],
     }
     records: list[dict] = []
@@ -101,8 +106,16 @@ def run_benchmark(puzzle_paths: Sequence[str | Path], output_path: str | Path,
                 order = list(methods)
                 rng.shuffle(order)
                 for method in order:
+                    attempt_started = perf_counter()
+                    peak_rss_bytes = None
+                    memory_samples = 0
+                    peak_child_rss_bytes = None
                     try:
-                        result = run_method(puzzle, method, time_limit_s)
+                        if measure_memory:
+                            result, peak_rss_bytes, memory_samples, peak_child_rss_bytes = run_isolated(
+                                path, method, time_limit_s)
+                        else:
+                            result = run_method(puzzle, method, time_limit_s)
                     except Exception as exc:
                         result = SolveResult(SolveStatus.ERROR,
                                              message=f"{type(exc).__name__}: {exc}")
@@ -114,17 +127,23 @@ def run_benchmark(puzzle_paths: Sequence[str | Path], output_path: str | Path,
                                              message="independent solution validation failed",
                                              model_variables=result.model_variables,
                                              model_constraints=result.model_constraints)
+                    attempt_wall_s = perf_counter() - attempt_started
                     record = {
                         "kind": "result", "puzzle_id": puzzle.puzzle_id or path.stem,
                         "puzzle_path": str(path), "size": puzzle.size,
                         "clues": puzzle.clue_count, "source": puzzle.source,
                         "difficulty": puzzle.difficulty, "dataset_kind": puzzle.kind,
+                        "hardness_level": puzzle.hardness_level,
                         "method": method,
                         "encoding": method[4:] if method.startswith("sat-") else None,
                         "repeat": repetition, "status": result.status.value,
                         "build_time_s": result.build_time_s,
                         "solve_time_s": result.solve_time_s,
                         "total_time_s": result.total_time_s,
+                        "attempt_wall_s": attempt_wall_s,
+                        "peak_rss_bytes": peak_rss_bytes,
+                        "peak_child_rss_bytes": peak_child_rss_bytes,
+                        "memory_samples": memory_samples,
                         "model_variables": result.model_variables,
                         "model_constraints": result.model_constraints,
                         "solution_valid": valid, "solution": result.solution,

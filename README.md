@@ -66,6 +66,14 @@ Chạy cả tám cấu hình trên đề 9×9 (mặc định mỗi lần giải 
 .\.venv\Scripts\python.exe scripts/run_all.py --data data/9x9 --repeats 3 --time-limit 30
 ```
 
+Để đo RAM đỉnh, thêm `--measure-memory`. Mỗi lượt chạy trong một tiến trình Python
+riêng; chương trình cố gắng lấy mẫu RSS của tiến trình đó cùng các tiến trình
+con (gồm `cpoptimizer.exe`) mỗi 10 ms:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/run_all.py --data data/benchmark/9x9/easy --repeats 3 --time-limit 30 --measure-memory
+```
+
 Chạy nhóm có thể hoạt động trên 16×16/25×25 mà không cần license MIP lớn:
 
 ```powershell
@@ -75,13 +83,33 @@ Chạy nhóm có thể hoạt động trên 16×16/25×25 mà không cần licen
 
 `--data` nhận một file JSON hoặc một thư mục (đọc đệ quy). `--methods` chọn cấu hình, `--seed` cố định thứ tự ngẫu nhiên của các phương pháp, `--output` chọn file kết quả. Mỗi solver dùng một luồng xử lý; giới hạn thời gian áp dụng cho **pha giải**, còn thời gian tạo mô hình được đo riêng.
 
+Các cột thời gian trong từng dòng kết quả:
+
+| Cột | Ý nghĩa |
+| --- | --- |
+| `build_time_s` | Thời gian solver tạo mô hình hoặc mã hóa SAT. |
+| `solve_time_s` | Thời gian gọi bộ giải và lấy nghiệm. |
+| `total_time_s` | Tổng hai thời gian trên; dùng để so sánh hiệu năng thuật toán. |
+| `attempt_wall_s` | Thời gian thực cả lượt, gồm nạp thư viện/khởi động tiến trình khi bật đo RAM, kiểm tra nghiệm và các phần phụ trợ. |
+| `peak_rss_bytes` | RAM resident lớn nhất quan sát được của cây tiến trình; `null` khi không bật đo RAM. Chia cho 1.048.576 để đổi sang MiB. |
+| `peak_child_rss_bytes` | RAM resident lớn nhất quan sát được riêng ở các tiến trình con; giúp kiểm tra phần bộ nhớ của CP Optimizer. |
+| `memory_samples` | Số mẫu RAM thu được trong lượt chạy. |
+
+RSS được lấy mẫu nên một đỉnh rất ngắn có thể bị bỏ lỡ. Tổng RSS của tiến trình
+cha và con cũng có thể tính trùng các trang bộ nhớ chia sẻ. Dùng cùng chế độ
+`--measure-memory` cho toàn bộ lượt cần so sánh; đọc `measurement_mode` và
+`memory_sample_interval_s` ở dòng metadata đầu tiên. Thời gian thực khi bật đo
+RAM bao gồm chi phí khởi động Python nên không thay cho `total_time_s`.
+
 Kết quả gốc là JSONL trong `results/raw/`: dòng đầu ghi môi trường/phụ thuộc, các dòng sau ghi từng lượt chạy, trạng thái, thời gian, số biến/ràng buộc và nghiệm. Để có bảng CSV sơ bộ:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts/summarize.py results/raw/<tên-file>.jsonl
 ```
 
-Chỉ các lượt `SOLVED` có nghiệm hợp lệ được tính trong trung vị thời gian. `UNSAT`, `TIMEOUT` và `ERROR` được đếm riêng.
+Chỉ các lượt `SOLVED` có nghiệm hợp lệ được tính trong trung vị thời gian.
+Trung vị và cực đại RAM dùng các lượt không có trạng thái `ERROR` và có mẫu RAM;
+CSV ghi theo MiB. `UNSAT`, `TIMEOUT` và `ERROR` được đếm riêng.
 
 ## Dữ liệu và kiểm thử
 
@@ -94,15 +122,15 @@ Chỉ các lượt `SOLVED` có nghiệm hợp lệ được tính trong trung v
 }
 ```
 
-`puzzle.py` từ chối đề sai kích thước, giá trị hoặc mâu thuẫn giữa các ô gợi ý. `validator.py` kiểm tra bảng nghiệm không phụ thuộc solver. `data/9x9/example.json` và các file `smoke-seed0.json` 16×16/25×25 là **đề thử đường chạy**, chưa phải bộ benchmark cân bằng theo độ khó. Tạo lại đề smoke bằng:
-
-Mỗi JSON có thể thêm `source`, `difficulty`, `kind`; benchmark chép các trường này vào kết quả gốc để bạn lọc và trích dẫn bộ đề khi viết báo cáo.
+`puzzle.py` từ chối đề sai kích thước, giá trị hoặc mâu thuẫn giữa các ô gợi ý. `validator.py` kiểm tra bảng nghiệm không phụ thuộc solver. Bộ 90 đề cân bằng theo kích thước và nhóm độ khó nằm tại [data/benchmark/README.md](data/benchmark/README.md); `manifest.csv` giữ nhãn gốc và đường dẫn nguồn của từng đề. Chạy bộ này bằng `--data data/benchmark`. `data/9x9/example.json` và các file `smoke-seed0.json` 16×16/25×25 chỉ là **đề thử đường chạy**. Tạo lại đề smoke bằng:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts/generate_smoke.py --sizes 16 25 --blanks-per-row 2 --seed 0
 ```
 
-Khi làm báo cáo, hãy bổ sung bộ đề có nguồn, nhóm kích thước/độ khó và chính sách chọn mẫu rõ ràng. Đừng dùng thời gian trên đề gần hoàn chỉnh này để kết luận phương pháp nào nhanh hơn nói chung.
+Mỗi JSON có thể thêm `source`, `difficulty`, `hardness_level`, `kind`; benchmark chép các trường này vào kết quả gốc để bạn lọc và trích dẫn bộ đề khi viết báo cáo.
+
+Khi làm báo cáo, trình bày quy tắc gộp nhãn suy diễn ràng buộc gốc thành ba nhóm độ khó. Đừng dùng thời gian trên đề smoke gần hoàn chỉnh để kết luận phương pháp nào nhanh hơn nói chung.
 
 Chạy kiểm thử:
 

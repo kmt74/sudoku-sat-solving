@@ -15,19 +15,28 @@ def main() -> int:
     parser.add_argument("--time-limit", type=float, default=30.0, metavar="SECONDS")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--output", type=Path, default=None, help="Raw JSONL output path")
+    parser.add_argument("--measure-memory", action="store_true",
+                        help="Run each attempt in a fresh process and sample peak process-tree RSS")
     args = parser.parse_args()
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-%f")
     output = args.output or Path("results/raw") / f"run-{timestamp}.jsonl"
+
+    def report(row: dict) -> None:
+        line = (f"{row['puzzle_id']}  {row['method']}  repeat={row['repeat']}  "
+                f"{row['status']}  total={row['total_time_s']:.4f}s  "
+                f"wall={row['attempt_wall_s']:.4f}s")
+        if row["peak_rss_bytes"] is not None:
+            line += f"  peak={row['peak_rss_bytes'] / 1048576:.1f}MiB"
+        print(line, flush=True)
+
     try:
         paths = discover_puzzles(args.data)
         run_benchmark(
             paths, output, methods=args.methods, repeats=args.repeats,
             time_limit_s=args.time_limit, seed=args.seed,
-            on_record=lambda row: print(
-                f"{row['puzzle_id']}  {row['method']}  repeat={row['repeat']}  "
-                f"{row['status']}  total={row['total_time_s']:.4f}s", flush=True
-            ),
+            measure_memory=args.measure_memory,
+            on_record=report,
         )
     except (OSError, ValueError) as exc:
         parser.error(str(exc))
