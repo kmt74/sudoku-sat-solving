@@ -390,7 +390,7 @@ Sau đó thêm hai liên kết cho mỗi $u_i$ và giới hạn tối đa một 
 \AMO_{\rm pair}\bigl(v_1,\ldots,v_q\bigr),
 \end{aligned}
 \end{equation}
-trong đó $\AMO_{\rm pair}(w_1,\ldots,w_t)=\bigwedge_{a<b}(\neg w_a\lor\neg w_b)$. Nếu hai $u_i$ cùng đúng, hai vị trí khác nhau sẽ khác hàng hoặc khác cột, nên ít nhất một AMO trên selector bị vi phạm. Nếu chỉ một lựa chọn đúng, bật selector hàng và cột của nó là đủ để mở rộng phép gán.
+trong đó $\AMO_{\rm pair}(w_1,\ldots,w_t)=\bigwedge_{a<b}(\neg w_a\lor\neg w_b)$. Nếu hai $u_i$ cùng đúng, hai vị trí khác nhau sẽ khác hàng hoặc khác cột, nên ít nhất một AMO trên selector bị vi phạm. Nếu chỉ một lựa chọn đúng, bật selector hàng và cột của nó là đủ để mở rộng phép gán. Nếu không có lựa chọn nào đúng, gán mọi selector bằng sai cũng thỏa toàn bộ clause. Vì vậy cả trường hợp không chọn và chọn đúng một đều được bảo toàn.
 
 \Needspace{14\baselineskip}
 Ví dụ $m=4$ dùng lưới $2\times2$ trong Hình~\ref{fig:product}. Chọn $u_3$ sẽ bật $h_2,v_1$; AMO trên hai trục tắt $h_1,v_2$, từ đó loại cả ba lựa chọn còn lại.
@@ -419,7 +419,7 @@ Sequential của Sinz chuyên biệt cho AMO dùng một chuỗi trạng thái \
 &\neg u_m\lor\neg s_{m-1}.
 \end{aligned}
 \end{equation}
-Nếu $u_a$ đúng, clause liên kết bật $s_a$ và các clause chuyển tiếp bật mọi trạng thái về sau; khi đó một $u_b$ đúng với $b>a$ sẽ xung đột. Với $m=4$, chẳng hạn $u_2=1$ kéo theo $s_2=s_3=1$, cấm $u_3,u_4$; các clause phía trước cũng loại $u_1$. Khi AMO thỏa, phép gán $s_i=\bigvee_{j=1}^{i}u_j$ luôn là một cách mở rộng hợp lệ. Đây là chứng minh tồn tại biến phụ, không đòi mọi trạng thái phải tương đương hai chiều với tổng tiền tố.
+Giả sử hai lựa chọn $u_a,u_b$ cùng đúng với $a<b$. Khi đó $a\le m-1$, nên clause liên kết bật $s_a$ và các clause chuyển tiếp bật mọi trạng thái đến $s_{b-1}$. Clause $\neg u_b\lor\neg s_{b-1}$ gây xung đột; lập luận cũng bao gồm trường hợp $b=m$ nhờ clause cuối chuỗi. Với $m=4$, chẳng hạn $u_2=1$ kéo theo $s_2=s_3=1$, cấm $u_3,u_4$; các clause phía trước cũng loại $u_1$. Khi AMO thỏa, phép gán $s_i=\bigvee_{j=1}^{i}u_j$ luôn là một cách mở rộng hợp lệ. Đây là chứng minh tồn tại biến phụ, không đòi mọi trạng thái phải tương đương hai chiều với tổng tiền tố.
 
 Chuỗi gồm hai clause đầu/cuối và ba clause cho mỗi vị trí giữa. Với $m\ge2$:
 \begin{equation}
@@ -602,7 +602,7 @@ Hai giới hạn cần giữ khi đọc kết quả là Dom và UNSOLVED cùng n
 \subsection{Môi trường và quy trình thực nghiệm}
 Thực nghiệm ngày 15/10/2026 dùng Intel Core i7-13700H, 20 bộ xử lý logic (logical CPU; CPU là central processing unit, bộ xử lý trung tâm), RAM vật lý khoảng 32 GiB (gibibyte, $1\,\mathrm{GiB}=2^{30}$ byte), Windows 11 build 26200 và Python 3.12.7. Phiên bản thư viện ghi trong metadata: python-sat 1.9.dev15, OR-Tools 9.15.6755, DOcplex 2.32.264, CPLEX Python 22.2.0.1, gurobipy 13.0.3 và psutil 7.2.2. CP Optimizer được gọi từ IBM ILOG CPLEX Optimization Studio 22.2; metadata chưa lưu riêng chuỗi phiên bản đầy đủ của tệp thực thi CP.
 
-Mỗi đề được chạy bằng tám cấu hình, mỗi cấu hình lặp ba lần, tổng cộng $90\times8\times3=2160$ lượt. Mỗi lượt có tiến trình Python mới; các lượt chạy tuần tự, không cạnh tranh chủ động với một lượt thực nghiệm khác. Bộ giải được giới hạn một luồng/worker; thứ tự phương pháp trong từng vòng lặp được xáo trộn bằng seed phụ thuộc vị trí đề trong manifest. Các lần lặp giữ nguyên seed bộ giải (CP Optimizer dùng mặc định), nên đây là phép đo lặp thời gian, không phải ba mẫu ngẫu nhiên độc lập của thuật toán.
+Mỗi đề được chạy bằng tám cấu hình, mỗi cấu hình lặp ba lần, tổng cộng $90\times8\times3=2160$ lượt. Mỗi lượt có tiến trình Python mới; các lượt chạy tuần tự, không cạnh tranh chủ động với một lượt thực nghiệm khác. Bộ giải được giới hạn một luồng/worker; thứ tự phương pháp trong từng vòng lặp được xáo trộn bằng seed phụ thuộc vị trí đề trong manifest. CPLEX, Gurobi và CP-SAT đặt seed bằng 0; Glucose3 và CP Optimizer giữ thiết lập ngẫu nhiên mặc định. Các lần lặp không chủ động đổi seed bộ giải, nên đây là phép đo lặp thời gian, không phải ba mẫu ngẫu nhiên độc lập của thuật toán.
 
 Một lượt thực nghiệm so sánh được gọi là một lượt benchmark. Quy trình gồm: đọc và kiểm tra đề; dựng mô hình; gọi giải với hạn 60 giây; giải mã; kiểm tra độc lập từng hàng, cột, khối và gợi ý; lưu kết quả JSONL (JSON Lines, mỗi dòng là một đối tượng JSON). Trạng thái chuẩn là SOLVED (đã tìm và kiểm tra nghiệm), UNSAT (đã chứng minh vô nghiệm), TIMEOUT (quá hạn khi chưa có nghiệm) hoặc ERROR (lỗi chạy, môi trường hoặc nghiệm không hợp lệ). Trong lượt chạy này không có UNSAT và ERROR. Việc có 2.120 nghiệm đúng xác nhận tính hợp lệ trên các trường hợp đã giải; không thay thế chứng minh mô hình hay kiểm thử đầy đủ mọi đầu vào.
 
@@ -663,14 +663,14 @@ Toàn bộ 2.160 lượt chạy tạo 2.120 nghiệm hợp lệ và 40 lượt q
 
 Hai tiêu chí thời gian dẫn đến những cách đọc khác nhau. Sequential có thời gian dựng và trung vị tổng thời gian thấp hơn Product một chút, nhưng ba timeout làm điểm PAR2-total tăng đáng kể. Do trung vị chỉ dùng lượt SOLVED, nó không đại diện cho chi phí xử lý toàn bộ bộ đề khi tỷ lệ hoàn tất khác nhau. Binary nằm giữa về PAR2-total và có một timeout; Commander và Sequential mỗi encoding có ba. Vì vậy ưu thế chính của Product là xử lý được cả phần đuôi khó trong hạn, thay vì chỉ thắng ở mức vài mili giây trên các lượt thông thường.
 
-Kích thước CNF chỉ giải thích một phần của kết quả. Ở $N=25$, Binary có ít biến nhất nhưng nhiều clause hơn Product, nên tiết kiệm biến không kéo theo chi phí dựng thấp nhất. Commander và Product có cùng số clause ở kích thước này nhưng PAR2-total toàn tập khác nhau rõ rệt; cấu trúc liên kết giữa các biến và đường lan truyền vì thế vẫn là yếu tố cần xét bên cạnh số đếm (Bảng~\ref{tab:counts}). Hình~\ref{fig:satcost} cho thấy chi phí dựng và RSS tăng theo kích thước, đồng thời các encoding tạo những mức chi phí khác nhau ngay trước khi bàn đến thời gian tìm kiếm.
+Kích thước CNF chỉ giải thích một phần của kết quả. Ở $N=25$, Binary có ít biến nhất nhưng nhiều clause hơn Product, nên tiết kiệm biến không kéo theo chi phí dựng thấp nhất. Commander và Product có cùng số clause ở kích thước này nhưng không có cùng kết quả hiệu năng trên bộ mẫu. Quan sát đó cho thấy số clause chưa đủ để dự đoán thứ hạng; cấu trúc liên kết và lan truyền là các yếu tố cần khảo sát thêm, chưa phải nguyên nhân đã được xác nhận từ phép đo hiện tại (Bảng~\ref{tab:counts}). Hình~\ref{fig:satcost} cho thấy chi phí dựng và RSS tăng theo kích thước, đồng thời các encoding tạo những mức chi phí khác nhau ngay trước khi bàn đến thời gian tìm kiếm.
 \begin{reportfigure}
 \centering\input{figures/sat_cost.tex}
 \caption{Chi phí của bốn SAT encoding theo kích thước: (a) thời gian dựng mô hình trung bình; (b) trung vị đỉnh RSS. Chú giải chung nằm dưới hai biểu đồ. Mỗi điểm tổng hợp 90 lượt.}
 \label{fig:satcost}
 \end{reportfigure}
 \Needspace{6\baselineskip}
-Về bộ nhớ, Commander có RSS trung vị thấp nhất nhưng chỉ thấp hơn Product khoảng 0,1 MiB trên toàn tập; khoảng cách nhỏ này không tạo ưu thế thực dụng rõ ràng để bù cho các lượt chưa hoàn tất. Cũng không thể quy mọi khác biệt RSS cho số biến phụ, vì phép đo gồm môi trường thực thi Python và bộ giải. RQ1 do đó ủng hộ Product theo tiêu chí kết hợp khả năng giải đủ, PAR2-total và RSS của cài đặt hiện tại; nó không thiết lập một định luật rằng Product luôn tốt nhất trên mọi tập Sudoku hoặc SAT bộ giải.
+Về bộ nhớ, Commander có RSS trung vị thấp nhất nhưng chỉ thấp hơn Product khoảng 0,1 MiB trên toàn tập; khoảng cách nhỏ này không tạo ưu thế thực dụng rõ ràng để bù cho các lượt chưa hoàn tất. Cũng không thể quy mọi khác biệt RSS cho số biến phụ, vì phép đo gồm môi trường thực thi Python và bộ giải. RQ1 do đó ủng hộ Product theo tiêu chí kết hợp khả năng giải đủ, PAR2-total và RSS của cài đặt hiện tại; nó không thiết lập một định luật rằng Product luôn tốt nhất trên mọi tập Sudoku hoặc bộ giải SAT.
 
 \Needspace{18\baselineskip}
 \subsection{RQ2: SAT trung bình so với các cấu hình đối chứng ra sao?}
@@ -723,7 +723,7 @@ Phân rã theo nhóm cho thấy vì sao trung bình toàn tập ưu tiên Produc
 \end{reportfigure}
 Hình~\ref{fig:heatmap} cho thấy phân tầng dữ liệu là cần thiết: phần khó ở kích thước lớn tạo biến động hiệu năng mạnh hơn các nhóm còn lại. Nhãn nguồn hữu ích để tổ chức mẫu nhưng không dự đoán chắc chắn thời gian của từng bộ giải. Đổi hệ số phạt từ 2 sang 1 hoặc 10 trên cùng dữ liệu không làm đổi hai kết luận chính: SATmean vẫn kém CP-SAT nhưng tốt hơn ba đối chứng còn lại, và Product vẫn có điểm trung bình thấp nhất. Đây là kiểm tra độ nhạy của cách tổng hợp, không phải thử nghiệm mới với giới hạn thời gian khác.
 
-Về lựa chọn thực tế, Product phù hợp nhất với mục tiêu xử lý toàn bộ bộ mẫu hiện tại theo PAR2-total và RSS; CP-SAT là phương án cạnh tranh nếu ưu tiên phần lớn các đề ngắn hoặc một mô hình biến ô gọn ở cấp khai báo. Tuy nhiên, Product được chọn trên chính tập dùng để báo cáo kết quả, nên lợi thế này cần được kiểm tra trên dữ liệu độc lập. Mỗi tầng chỉ có 10 đề từ một nguồn, ba lần lặp giữ cùng seed, và cấu hình gần mặc định một worker; chưa có cơ sở khẳng định khác biệt có ý nghĩa thống kê hoặc xác định nguyên nhân nội bộ của bộ giải. Kết luận thời gian còn áp dụng cho $t^{\rm model}$; ứng dụng chạy tiến trình mới cho từng đề cần xét thêm $t^{\rm wall}$ và chi phí khởi động như mục~\ref{sec:measurement}.
+Về lựa chọn thực tế, Product đạt PAR2-total thấp nhất và giải đủ bộ mẫu, đồng thời có RSS thấp hơn CP-SAT. Product không có RSS thấp nhất ở mọi nhóm; khuyến nghị này ưu tiên hoàn tất và thời gian phạt, rồi mới xét chi phí bộ nhớ; CP-SAT là phương án cạnh tranh nếu ưu tiên phần lớn các đề ngắn hoặc một mô hình biến ô gọn ở cấp khai báo. Tuy nhiên, Product được chọn trên chính tập dùng để báo cáo kết quả, nên lợi thế này cần được kiểm tra trên dữ liệu độc lập. Mỗi tầng chỉ có 10 đề từ một nguồn, ba lần lặp giữ cùng seed, và cấu hình gần mặc định một worker; chưa có cơ sở khẳng định khác biệt có ý nghĩa thống kê hoặc xác định nguyên nhân nội bộ của bộ giải. Kết luận thời gian còn áp dụng cho $t^{\rm model}$; ứng dụng chạy tiến trình mới cho từng đề cần xét thêm $t^{\rm wall}$ và chi phí khởi động như mục~\ref{sec:measurement}.
 
 \Needspace{24\baselineskip}
 \section{Kết luận}
@@ -733,7 +733,7 @@ Hai cách đại diện cho nhóm SAT dẫn đến hai kết luận khác nhau v
 
 Với thiết lập hiện tại, Product là lựa chọn triển khai được dữ liệu ủng hộ cho toàn bộ hỗn hợp đề, còn CP-SAT là đối chứng mạnh và là phương án hợp lý khi ưu tiên mô hình khai báo ngắn cùng tốc độ trên các đề thông thường. Đây là kết luận trên một bộ mẫu và một cấu hình đo cụ thể. Bước xác nhận tiếp theo cần cố định lựa chọn trên tập phát triển rồi đánh giá trên tập kiểm tra độc lập, mở rộng nguồn đề và thu thêm log tìm kiếm. Những bước đó sẽ phân biệt lợi thế bền vững của biểu diễn với tác động của phân bố dữ liệu, tham số bộ giải và cách triển khai.
 
-\section*{Dữ liệu và mã nguồn}
+\section*{Dữ liệu và mã nguồn (Data Availability)}
 Mã nguồn dự án được lưu tại \url{https://github.com/kmt74/sudoku-sat-solving}. Gói bổ sung của bản báo cáo này chứa \code{data/all-results.jsonl}, bảng danh mục 90 đề với mã định danh, nhãn nguồn và mã băm, 90 đề JSON, chương trình \code{analyze.py}, bảng số liệu tái tính và bản chụp mã nguồn trong \code{supplement/code}. Các bảng và hình được tạo trực tiếp từ dữ liệu gốc, không nhập tay số đo. Gói dữ liệu gốc, chương trình tái tính và bản chụp mã dùng cho phép đo được công bố cùng nguồn LaTeX trong thư mục \code{report/} của kho GitHub nêu trên; hướng dẫn biên dịch và tái lập nằm trong \code{report/README.md}. Dữ liệu Sudoku gốc và giấy phép MIT được ghi nguồn riêng \citep{corpus}.
 
 \bibliographystyle{cas-model2-names}

@@ -1,6 +1,6 @@
 # Nguồn chính và cách sử dụng
 
-Tài liệu được truy cập ngày 16--17/10/2026. Danh mục trích dẫn của báo cáo ở `references.bib`.
+Tài liệu được truy cập ngày 16--18/10/2026. Danh mục trích dẫn của báo cáo ở `references.bib`.
 
 | Nội dung | Nguồn gốc | Điều đã kiểm tra khi viết |
 |---|---|---|
@@ -32,3 +32,7 @@ Tài liệu được truy cập ngày 16--17/10/2026. Danh mục trích dẫn c�
 Các hình Sudoku, Product và Hall là ví dụ minh họa tự xây dựng, vẽ trực tiếp bằng TikZ; chúng không phải đề benchmark bổ sung hay ảnh do mô hình sinh ảnh tạo. Hai hình kết quả được vẽ bằng TikZ/PGFPlots từ số liệu đã lưu.
 
 Các tỷ lệ 65,2% điểm SATmean do timeout, 94,3%/97,9% thời gian ở nhóm 25×25 khó, và trung bình trên 80 đề còn lại được tính lại trực tiếp từ JSONL bằng `build_rq_assets.py`; đây là phân tích bổ sung trên cùng lượt đo, không phải kết quả chạy mới.
+
+## Kiểm tra nội dung trước khi nộp (18/10/2026)
+
+Đối chiếu lại bốn mã hóa với mã triển khai, duyệt 2.032 phép gán trên các nhóm AMO nhỏ, kiểm tra độc lập 2.120 nghiệm đã lưu và đối chiếu 2.160 số đếm mô hình. Tái tính sáu bảng dữ liệu và heatmap trong thư mục kiểm tra riêng; kết quả trùng với bản báo cáo. Các tỷ lệ 67,7%, 18,2%, 65,2%, 94,3% và 97,9%, cùng nhận định độ nhạy PAR1/PAR2/PAR10, được kiểm tra trực tiếp từ JSONL. Không chạy lại benchmark hoặc thay số đo. Chứng minh Sequential được viết lại cho đủ trường hợp cuối chuỗi; phần thảo luận phân biệt quan sát về số clause với kết luận nhân quả và không gọi Product là cấu hình tiết kiệm RAM nhất ở mọi nhóm. Tài liệu Modeling and Programming with Gecode được đối chiếu bản 6.4.0, ngày xuất bản 05/09/2026.
