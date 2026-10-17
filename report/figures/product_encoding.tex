@@ -1,0 +1,21 @@
+% Original vector diagram drawn with TikZ; no generated raster asset.
+\begin{tikzpicture}[x=1.35cm,y=1.0cm,>=Latex,
+ every node/.style={font=\small},
+ selector/.style={draw,rounded corners,minimum width=.8cm,minimum height=.5cm}]
+\draw[gray!70] (0,0) rectangle (2,2);
+\draw[gray!70] (1,0)--(1,2) (0,1)--(2,1);
+\fill[reportgreen!12] (.02,.02) rectangle (.98,.98);
+\node at (.5,1.5) {$u_1$};\node at (1.5,1.5) {$u_2$};
+\node[text=reportgreen] at (.5,.5) {$u_3=1$};\node at (1.5,.5) {$u_4$};
+\node[selector] (h1) at (-1,1.5) {$h_1$};
+\node[selector,draw=reportgreen,text=reportgreen] (h2) at (-1,.5) {$h_2=1$};
+\node[selector,draw=reportgreen,text=reportgreen] (v1) at (.5,-.85) {$v_1=1$};
+\node[selector] (v2) at (1.5,-.85) {$v_2$};
+\draw[->,gray!65] (.18,1.5)--(h1);
+\draw[->,reportgreen,thick] (.16,.5)--(h2);
+\draw[->,reportgreen,thick] (.5,.25)--(v1);
+\node[align=left,anchor=west] at (2.45,1.5)
+ {$\AMO(h_1,h_2)$\\[3pt]$\AMO(v_1,v_2)$};
+\node[font=\footnotesize,anchor=west] at (-1.4,-1.6)
+ {Mũi tên: biến chính đúng buộc selector tương ứng đúng.};
+\end{tikzpicture}

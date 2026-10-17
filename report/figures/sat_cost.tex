@@ -1,0 +1,22 @@
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1,horizontal sep=1.1cm},
+width=.44\linewidth,height=5.0cm,xtick={9,16,25},xmin=8,xmax=26,
+xlabel={$N$},grid=major,scaled y ticks=false,
+yticklabel style={/pgf/number format/fixed,/pgf/number format/precision=2},
+title style={font=\small,align=center},
+legend columns=4,
+legend style={draw=none,fill=none,font=\footnotesize,column sep=10pt},
+every axis plot/.append style={mark=*,line width=.85pt}]
+\nextgroupplot[legend to name=satcostlegend,title={(a) Thời gian dựng trung bình (s)},ymin=0,ymax=.18,ytick={0,.05,.10,.15}]
+\addplot[color=reportblue] coordinates {(9,0.006052) (16,0.034576) (25,0.157957)};\addlegendentry{Binary}
+\addplot[color=reportorange] coordinates {(9,0.004208) (16,0.027601) (25,0.116050)};\addlegendentry{Commander}
+\addplot[color=reportgreen] coordinates {(9,0.004415) (16,0.023120) (25,0.098687)};\addlegendentry{Product}
+\addplot[color=reportpurple] coordinates {(9,0.003996) (16,0.022040) (25,0.096950)};\addlegendentry{Sequential}
+\nextgroupplot[title={(b) Trung vị đỉnh RSS (MiB)},ymin=0,ymax=95,ytick={0,20,40,60,80}]
+\addplot[color=reportblue] coordinates {(9,29.60352) (16,39.24414) (25,86.79688)};
+\addplot[color=reportorange] coordinates {(9,29.10352) (16,35.85352) (25,66.63477)};
+\addplot[color=reportgreen] coordinates {(9,28.91797) (16,35.94727) (25,64.06445)};
+\addplot[color=reportpurple] coordinates {(9,28.93164) (16,36.65039) (25,70.43945)};
+\end{groupplot}
+\node[anchor=north,inner sep=0pt] at ($(group c1r1.south)!0.5!(group c2r1.south)+(0,-1.05cm)$) {\pgfplotslegendfromname{satcostlegend}};
+\end{tikzpicture}

@@ -1,0 +1,122 @@
+"""Check that benchmark rows remain independently verifiable and summarizable."""
+
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from sudoku_bench.benchmark import discover_puzzles, run_benchmark
+
+
+class BenchmarkTests(unittest.TestCase):
+    def test_raw_jsonl_and_summary(self) -> None:
+        from scripts.summarize import summarize_file
+
+        puzzle = Path(__file__).resolve().parents[1] / "data" / "9x9" / "example.json"
+        with tempfile.TemporaryDirectory() as directory:
+            raw = Path(directory) / "raw.jsonl"
+            output = Path(directory) / "summary.csv"
+            records = run_benchmark([puzzle], raw, methods=["sat-sequential"],
+                                    repeats=2, time_limit_s=5)
+            lines = [json.loads(line) for line in raw.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual(lines[0]["kind"], "meta")
+            self.assertEqual(len(records), 2)
+            self.assertEqual(len(lines), 3)
+            self.assertTrue(all(row["status"] == "SOLVED" and row["solution_valid"]
+                                for row in records))
+            self.assertTrue(all(row["attempt_wall_s"] >= 0 for row in records))
+            self.assertTrue(all(row["peak_rss_bytes"] is None for row in records))
+            self.assertTrue(all(row["peak_child_rss_bytes"] is None for row in records))
+            summary = summarize_file(raw, output)
+            self.assertEqual(summary[0]["solved"], 2)
+            self.assertEqual(summary[0]["error"], 0)
+            self.assertGreater(summary[0]["median_model_variables"], 0)
+            self.assertTrue(output.exists())
+
+    def test_isolated_memory_measurement(self) -> None:
+        from scripts.summarize import summarize_file
+
+        puzzle = Path(__file__).resolve().parents[1] / "data" / "9x9" / "example.json"
+        with tempfile.TemporaryDirectory() as directory:
+            raw = Path(directory) / "raw.jsonl"
+            summary_path = Path(directory) / "summary.csv"
+            records = run_benchmark([puzzle], raw, methods=["sat-sequential"],
+                                    time_limit_s=5, measure_memory=True)
+            meta = json.loads(raw.read_text(encoding="utf-8").splitlines()[0])
+            summary = summarize_file(raw, summary_path)[0]
+        row = records[0]
+        self.assertEqual(meta["measurement_mode"], "isolated-process-tree")
+        self.assertEqual(row["status"], "SOLVED")
+        self.assertTrue(row["solution_valid"])
+        self.assertGreater(row["peak_rss_bytes"], 0)
+        self.assertGreaterEqual(row["peak_child_rss_bytes"], 0)
+        self.assertGreater(row["memory_samples"], 0)
+        self.assertGreaterEqual(row["attempt_wall_s"], row["total_time_s"])
+        self.assertGreater(summary["median_peak_rss_mib"], 0)
+        self.assertGreater(summary["median_attempt_wall_s"], 0)
+
+    def test_isolated_run_without_solve_limit(self) -> None:
+        puzzle = Path(__file__).resolve().parents[1] / "data" / "9x9" / "example.json"
+        with tempfile.TemporaryDirectory() as directory:
+            raw = Path(directory) / "raw.jsonl"
+            records = run_benchmark([puzzle], raw, methods=["sat-product"],
+                                    time_limit_s=None, measure_memory=True)
+            meta = json.loads(raw.read_text(encoding="utf-8").splitlines()[0])
+        self.assertIsNone(meta["time_limit_s"])
+        self.assertEqual(records[0]["status"], "SOLVED")
+        self.assertTrue(records[0]["solution_valid"])
+
+    def test_discovers_puzzles_and_rejects_empty_runs(self) -> None:
+        root = Path(__file__).resolve().parents[1] / "data" / "9x9"
+        self.assertTrue(discover_puzzles(root))
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(ValueError):
+                run_benchmark([], Path(directory) / "raw.jsonl")
+
+    def test_summary_separates_timeout_error_and_unsat(self) -> None:
+        from scripts.summarize import summarize_file
+
+        with tempfile.TemporaryDirectory() as directory:
+            raw = Path(directory) / "mixed.jsonl"
+            summary_path = Path(directory) / "summary.csv"
+            rows = [
+                {"kind": "result", "size": 4, "method": "sat-sequential",
+                 "puzzle_path": "one.json", "status": status,
+                 "solution_valid": status == "SOLVED", "build_time_s": 1.0,
+                 "solve_time_s": 2.0, "total_time_s": 3.0,
+                 "model_variables": 10, "model_constraints": 20}
+                for status in ("SOLVED", "UNSAT", "TIMEOUT", "ERROR")
+            ]
+            raw.write_text("\n".join(json.dumps(row) for row in rows) + "\n",
+                           encoding="utf-8")
+            summary = summarize_file(raw, summary_path)[0]
+        self.assertEqual((summary["solved"], summary["unsat"],
+                          summary["timeout"], summary["error"]), (1, 1, 1, 1))
+        self.assertEqual(summary["solved_rate"], 0.25)
+        self.assertEqual(summary["median_solve_s"], 2.0)
+
+    def test_summary_can_group_by_difficulty(self) -> None:
+        from scripts.summarize import summarize_file
+
+        with tempfile.TemporaryDirectory() as directory:
+            raw = Path(directory) / "raw.jsonl"
+            output = Path(directory) / "summary.csv"
+            rows = [
+                {"kind": "result", "size": 9, "difficulty": difficulty,
+                 "method": "sat-product", "puzzle_path": difficulty + ".json",
+                 "status": "SOLVED", "solution_valid": True,
+                 "build_time_s": 0.1, "solve_time_s": 0.2, "total_time_s": 0.3,
+                 "model_variables": 1, "model_constraints": 1}
+                for difficulty in ("easy", "hard")
+            ]
+            raw.write_text("\n".join(json.dumps(row) for row in rows) + "\n",
+                           encoding="utf-8")
+            summary = summarize_file(raw, output, by_difficulty=True)
+            header = output.read_text(encoding="utf-8").splitlines()[0]
+        self.assertEqual(len(summary), 2)
+        self.assertEqual({row["difficulty"] for row in summary}, {"easy", "hard"})
+        self.assertIn("difficulty", header)
+
+
+if __name__ == "__main__":
+    unittest.main()

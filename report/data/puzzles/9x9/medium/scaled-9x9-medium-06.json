@@ -1,0 +1,21 @@
+{
+  "id": "scaled-9x9-medium-06",
+  "kind": "benchmark",
+  "source": "zayenz/scaled-sudoku-instances@a8596ccaa29587c821c1ccf29225a66a7b4d5a13",
+  "source_id": "chunk-0005-399",
+  "source_path": "base/9x9/chunk-0005/puzzle-000399.sdk.txt",
+  "source_root": "9x9/chunk-0005/puzzle-000399",
+  "difficulty": "medium",
+  "hardness_level": "BndBS",
+  "grid": [
+    [0, 0, 0, 0, 0, 0, 9, 0, 7],
+    [7, 0, 0, 0, 5, 0, 0, 0, 0],
+    [0, 0, 4, 0, 0, 0, 6, 0, 2],
+    [0, 1, 0, 0, 0, 2, 5, 0, 0],
+    [5, 0, 0, 9, 1, 0, 0, 0, 0],
+    [0, 0, 6, 0, 0, 0, 0, 4, 0],
+    [0, 0, 0, 3, 0, 0, 0, 9, 0],
+    [0, 9, 0, 0, 8, 1, 2, 0, 0],
+    [0, 6, 0, 0, 0, 7, 8, 0, 0]
+  ]
+}

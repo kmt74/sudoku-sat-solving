@@ -1,2 +1,741 @@
-% TODO: Add the Elsevier cas-sc template supplied/referenced by the course.
-% TODO: Write the paper after experiments; do not invent results.
+% Overleaf: Project Settings (gear icon) > Compiler > XeLaTeX.
+% XeLaTeX reads this UTF-8 file directly; no encoding commands are needed.
+\PassOptionsToPackage{numbers,sort&compress}{natbib}
+\documentclass[a4paper]{cas-sc}
+\usepackage[no-math]{fontspec}
+
+% Keep body, headings and code in one family. TeX Gyre is bundled with Overleaf.
+\IfFontExistsTF{Times New Roman}{%
+  \setmainfont{Times New Roman}%
+  \setsansfont{Times New Roman}%
+  \setmonofont{Times New Roman}%
+}{%
+  \setmainfont{texgyretermes-regular.otf}[%
+    BoldFont=texgyretermes-bold.otf,
+    ItalicFont=texgyretermes-italic.otf,
+    BoldItalicFont=texgyretermes-bolditalic.otf]%
+  \setsansfont{texgyretermes-regular.otf}[%
+    BoldFont=texgyretermes-bold.otf,
+    ItalicFont=texgyretermes-italic.otf]%
+  \setmonofont{texgyretermes-regular.otf}%
+}
+
+
+
+\usepackage{mathtools,tabularx,enumitem,placeins,needspace}
+\usepackage{microtype,xurl}
+\usepackage{natbib}
+\usepackage{tikz,pgfplots,threeparttable,siunitx}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,backgrounds}
+\usepgfplotslibrary{groupplots}
+\pgfplotsset{compat=1.18,every axis/.append style={font=\small,
+  label style={font=\small},tick label style={font=\footnotesize},
+  legend style={font=\footnotesize,draw=none},grid style={gray!15}}}
+\sisetup{group-separator={\,},group-minimum-digits=4,detect-all}
+\definecolor{reportblue}{HTML}{245A76}
+\definecolor{reportgreen}{HTML}{31735C}
+\definecolor{reportorange}{HTML}{BA6529}
+\definecolor{reportpurple}{HTML}{805A91}
+
+\newcommand{\best}[1]{\textbf{#1}}
+\newcommand{\second}[1]{\underline{#1}}
+\newcommand{\ranknote}{Tô đậm: tốt nhất; gạch chân: tốt nhì trong mỗi cột.
+Đồng hạng cùng được đánh dấu; xếp theo số chưa làm tròn.
+SOLVED càng lớn càng tốt; thời gian và RSS càng nhỏ càng tốt.}
+\newcommand{\reporttablenote}[1]{\par\smallskip
+  \begin{minipage}{\linewidth}\footnotesize\itshape\raggedright #1\par\end{minipage}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newsavebox{\reporttablebox}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{5pt}
+\setlength{\extrarowheight}{1.5pt}
+
+\usepackage{etoolbox}
+\makeatletter
+
+\makeatother
+
+% cas-sc enables fleqn internally: explicitly restore centered AMS displays.
+\makeatletter
+\@fleqnfalse
+\@mathmargin\@centering
+\makeatother
+\AtBeginEnvironment{table}{\small\rmfamily}
+\AtBeginEnvironment{tabular}{\rmfamily}
+\AtBeginEnvironment{tabularx}{\rmfamily}
+\AtBeginEnvironment{figure}{\rmfamily}
+\renewcommand{\abstractname}{TÓM TẮT}
+
+% --- THÔNG TIN TÁC GIẢ VÀ HỌC PHẦN (Chỉ cần điền Mã SV vào dòng dưới) ---
+\newcommand{\ReportAuthor}{Khúc Minh Tiến}
+\newcommand{\ReportStudentID}{24021639} % <-- Điền mã sinh viên của bạn vào đây
+\newcommand{\ReportMajor}{Ngành Khoa học Máy tính, Khoa Công nghệ Thông tin, Trường Đại học Công nghệ -- ĐHQGHN}
+\newcommand{\ReportClass}{Lớp học phần: Các vấn đề hiện đại của KHMT (INT3011E 03)}
+
+\newcommand{\ALO}{\operatorname{ALO}}
+\newcommand{\AMO}{\operatorname{AMO}}
+\newcommand{\EO}{\operatorname{EO}}
+\newcommand{\AD}{\operatorname{AllDifferent}}
+\newcommand{\PAR}{\operatorname{PAR2}_{\rm total}}
+\newcommand{\I}{\mathbb{I}}
+\newcommand{\code}[1]{{\rmfamily #1}}
+\makeatletter
+\newcommand{\tableinput}[1]{\@@input #1 }
+\makeatother
+\renewcommand{\figurename}{Hình}
+\renewcommand{\tablename}{Bảng}
+\renewcommand{\refname}{Tài liệu tham khảo}
+\renewcommand{\printorcid}{}
+\setlist[itemize]{noitemsep,topsep=3pt,leftmargin=*}
+\setlist[enumerate]{noitemsep,topsep=3pt,leftmargin=*}
+\setlength{\emergencystretch}{2em}
+\makeatletter
+\ExplSyntaxOn
+
+
+
+% The CAS article-information heading belongs to the keywords environment.
+% Keep its original column width, rules, keyword label and item separation.
+\RenewDocumentEnvironment { keywords } { O{Từ khóa} }
+  {
+    \tex_global:D \tex_setbox:D \g_stm_key_box = \vtop \bgroup
+    \hsize=.25\textwidth
+    \cs_set:Npn \sep: { \par }
+    \cs_set_eq:NN \sep \sep:
+    \parindent\z@
+    {\normalfont\small THÔNG~TIN~BÁO~CÁO}\par
+    \skip_vertical:n {-3pt}
+    \rule{.25\textwidth}{.2pt}\par\footnotesize
+    \noindent\textit{#1}:\par
+  }
+  { \egroup }
+
+\cs_set:Npn \__first_footerline: {\small\sffamily Báo~cáo~bài~tập~lớn~1}
+
+
+
+% Preserve CAS's caption spacing, with the requested label/title line break.
+
+\cs_set_protected:Npn \__make_tbl_caption:nn #1#2
+
+  {
+
+    \skip_vertical:N \l_tbl_abovecap_skip
+
+    \noindent\parbox{\l_tbl_width_dim}
+
+      {\rmfamily\small\raggedright\textbf{#1.}\par #2\par\vspace{4pt}}
+
+    \skip_vertical:N \l_tbl_belowcap_skip
+
+  }
+
+% Keep each complete illustration/table in the text flow, using CAS captions.
+
+\NewDocumentEnvironment{reporttable}{m m +m +b}
+
+  {
+
+    \par\addvspace{\intextsep}\begingroup
+
+    \sbox{\reporttablebox}{\small\rmfamily\ignorespaces #4\unskip}
+
+    \typeout{REPORT-TABLE: #2; width=\the\wd\reporttablebox; limit=\the\linewidth}
+
+    \noindent\makebox[\linewidth][c]{%
+
+      \begin{minipage}{\wd\reporttablebox}
+
+      \__reset_tbl:
+
+      \dim_set:Nn \l_tbl_width_dim {\wd\reporttablebox}
+
+      \cs_set_eq:NN \@makecaption \__make_tbl_caption:nn
+
+      \def\@captype{table}
+
+      \small\rmfamily
+
+      \caption{#1}\label{#2}
+
+      \noindent\usebox{\reporttablebox}
+
+      \reporttablenote{#3}
+
+      \end{minipage}}
+
+    \par\endgroup\addvspace{\intextsep}
+
+  }
+
+  {}
+
+\NewDocumentEnvironment{reportfigure}{}
+
+  {
+
+    \par\addvspace{\intextsep}\noindent\begin{minipage}{\linewidth}
+
+    \__reset_fig:
+
+    \dim_set:Nn \l_fig_width_dim {\linewidth}
+
+    \cs_set_eq:NN \@makecaption \__make_fig_caption:nn
+
+    \def\@captype{figure}
+
+    \centering\rmfamily
+
+  }
+
+  {\end{minipage}\par\addvspace{\intextsep}}
+
+\cs_set:Npn \__first_footerline: {\small\sffamily Báo~cáo~bài~tập~lớn~1}
+
+\ExplSyntaxOff
+\makeatother
+
+
+\begin{document}
+\raggedbottom
+\shorttitle{Sudoku: SAT, ILP và CP}
+\shortauthors{\ReportAuthor}
+\title[mode=title]{Giải Sudoku bằng SAT, ILP và CP}
+
+\author[1]{\ReportAuthor}
+\affiliation[1]{
+  organization={\ReportMajor; },
+  addressline={Mã sinh viên: \ReportStudentID\ -- \ReportClass}
+}
+
+\begin{abstract}
+Sudoku là bài toán điền số trên một bảng vuông sao cho các giá trị không lặp trong mỗi hàng, cột và khối. Từ một tập luật ngắn gọn, bài toán tạo ra những quan hệ phụ thuộc chặt chẽ giữa các ô; khi kích thước tăng, việc tìm một phép điền đồng thời thỏa mọi điều kiện trở nên khó hơn nhiều so với kiểm tra một bảng đã hoàn chỉnh. Đặc điểm này khiến Sudoku phù hợp để nghiên cứu cách biểu diễn ràng buộc và cơ chế suy luận của các bộ giải tổng quát. Báo cáo khảo sát ba hướng mô hình hóa: tính khả thỏa logic Boolean (Boolean satisfiability, SAT), quy hoạch tuyến tính nguyên (integer linear programming, ILP) và lập trình ràng buộc (constraint programming, CP), bao gồm bộ giải lai CP-SAT kết hợp CP với SAT. Trọng tâm là bốn cách mã hóa ràng buộc nhiều nhất một lựa chọn đúng (at-most-one) trong SAT và sự đánh đổi giữa chi phí biểu diễn, tốc độ tìm nghiệm, khả năng hoàn tất trong hạn thời gian và bộ nhớ. Thực nghiệm trên nhiều kích thước và nhóm độ khó nhằm xác định khi nào một mô hình có lợi thế, giải thích sự khác nhau giữa các tiêu chí đánh giá và rút ra cơ sở lựa chọn cấu hình cho Sudoku tổng quát.
+\end{abstract}
+\begin{keywords}[Từ khóa]
+Sudoku \sep SAT \sep Exact one \sep ILP \sep CP \sep Benchmark
+\end{keywords}
+\maketitle
+
+\section{Giới thiệu}
+\subsection{Trò chơi Sudoku}
+Một đề Sudoku gồm một bảng vuông với một số ô đã được điền sẵn, gọi là các \emph{gợi ý}. Ở dạng quen thuộc $9\times9$, bảng được chia thành chín khối $3\times3$. Người chơi điền các ô còn trống bằng các số từ 1 đến 9, giữ nguyên gợi ý, sao cho mỗi hàng, mỗi cột và mỗi khối chứa mỗi số đúng một lần. Các chữ số đóng vai trò nhãn phân biệt: không có quy tắc cộng, trừ hay tối ưu tổng chữ số trong luật Sudoku \citep{lynce2006}.
+
+\Needspace{16\baselineskip}
+Hình~\ref{fig:sudoku} minh họa luật bằng phiên bản $4\times4$, với miền giá trị $\{1,2,3,4\}$ và khối $2\times2$. Chỉ cần đổi kích thước bảng, miền giá trị và kích thước khối, ta thu được cùng một dạng bài toán ở quy mô lớn hơn. Nhờ đó, Sudoku cho phép bắt đầu từ một ví dụ dễ kiểm tra bằng mắt rồi khảo sát sự thay đổi của bộ giải khi số biến và quan hệ ràng buộc tăng lên.
+\begin{reportfigure}
+\centering\input{figures/sudoku_intro.tex}
+\caption{Một đề Sudoku $4\times4$ và một nghiệm hợp lệ. Số đen là gợi ý, số xanh là giá trị điền thêm; dải ngang, dải dọc và khung xanh lá minh họa hàng, cột và khối.}
+\label{fig:sudoku}
+\end{reportfigure}
+
+Điểm khó xuất hiện ở sự giao nhau giữa các quy tắc. Điền một ô không chỉ ảnh hưởng đến hàng của nó mà còn thu hẹp lựa chọn trong cột và khối; những thay đổi này tiếp tục tác động đến các ô khác. Một lựa chọn chưa gây trùng số ngay lập tức vẫn có thể dẫn đến bế tắc sau nhiều bước. Ngược lại, khi đã có một bảng hoàn chỉnh, ta chỉ cần kiểm tra các hàng, cột, khối và gợi ý. Sự khác biệt giữa \emph{tìm ra} và \emph{kiểm tra} một nghiệm tạo nên một bài thử nghiệm rõ ràng cho các phương pháp suy luận và tìm kiếm.
+
+\subsection{Vấn đề mô hình hóa bài toán}
+Sudoku có thể được mô hình hóa như một bài toán thỏa ràng buộc vì mọi quyết định điền ô đều thuộc một tập hữu hạn, còn tính hợp lệ được xác định bằng các điều kiện chính xác về hàng, cột, khối và gợi ý. Một mô hình xác định các biến quyết định, miền giá trị và tập ràng buộc sao cho nghiệm của mô hình tương ứng với bảng Sudoku hợp lệ. Việc chuyển luật chơi sang một ngôn ngữ hình thức cho phép dùng bộ giải tổng quát để tìm nghiệm, đồng thời tạo cơ sở kiểm tra tính đúng đắn của cách biểu diễn. Lựa chọn mô hình còn quyết định loại cấu trúc mà bộ giải có thể khai thác trong lan truyền và tìm kiếm; do đó cùng một bài toán có thể dẫn đến chi phí giải khác nhau dù tập nghiệm được bảo toàn \citep{lynce2006,regin1994}.
+
+Chẳng hạn, điều kiện một ô nhận đúng một chữ số có thể được diễn đạt bằng một nhóm biến Boolean chỉ nhận đúng hoặc sai, một tổng các biến nhị phân bằng 1, hoặc miền của một biến nguyên. SAT chuyển các lựa chọn thành mệnh đề tuyển (clause): mỗi clause là phép ``hoặc'' của các literal, trong đó literal là một biến Boolean hoặc phủ định của biến ấy. Hội, tức phép ``và'', của các clause tạo công thức dạng chuẩn hội (conjunctive normal form, CNF); ILP giữ các quan hệ tuyến tính để kết hợp thư giãn với phân nhánh; CP giữ cấu trúc miền hữu hạn và ràng buộc tất cả khác nhau (all-different) để loại giá trị không tương thích \citep{lynce2006,gurobiSudoku,ibmCPManual}. Những cách tiếp cận này khai thác các khía cạnh khác nhau của cùng luật chơi. So sánh chúng trên một bộ đề thống nhất giúp xác định sự đánh đổi giữa kích thước biểu diễn, chi phí dựng mô hình và khả năng tìm nghiệm, thay vì xem số biến hoặc số ràng buộc là thước đo hiệu năng duy nhất.
+
+\subsection{Mục tiêu và phạm vi nghiên cứu}
+Nghiên cứu đánh giá ảnh hưởng của cách biểu diễn Sudoku đến thời gian thực thi, tỷ lệ giải hoàn tất và bộ nhớ. Thiết kế gồm hai mức so sánh: trước hết cố định bộ giải SAT Glucose3 để khảo sát bốn cách mã hóa (encoding) ràng buộc nhiều nhất một (at-most-one, AMO); sau đó đối chiếu nhóm SAT với cùng mô hình ILP chạy trên CPLEX/Gurobi và mô hình biến ô chạy trên CP Optimizer/CP-SAT. CPLEX và Gurobi là các bộ giải quy hoạch hỗn hợp nguyên (mixed-integer programming, MIP), cho phép cả biến nguyên lẫn biến liên tục; mô hình ở đây chỉ có biến nhị phân nên là trường hợp riêng của MIP. Đối tượng được đánh giá là các cặp mô hình--bộ giải cụ thể; kết quả không được dùng để xếp hạng toàn bộ họ SAT, ILP hay CP về mặt lý thuyết.
+
+Bộ nhớ được đánh giá qua RSS (resident set size), lượng bộ nhớ của tiến trình đang thường trú trong RAM (random-access memory, bộ nhớ truy cập ngẫu nhiên). Chỉ số thời gian chính là PAR2 (penalized average runtime, hệ số phạt 2): lượt quá hạn (timeout) nhận điểm bằng hai lần hạn giải; PAR2-total cộng thêm thời gian dựng mô hình. Định nghĩa chi tiết nằm ở mục~\ref{sec:measurement} và mục~\ref{sec:timeout}.
+
+Ba câu hỏi nghiên cứu (research question, viết tắt RQ) được xác định như sau:
+\begin{enumerate}[label=\textbf{RQ\arabic*.},leftmargin=3.5em,labelsep=.6em,itemsep=5pt,topsep=4pt]
+\item \textbf{So sánh các SAT encoding.} Khi dùng chung Glucose3, Binary, Commander, Product và Sequential khác nhau thế nào về kích thước CNF, thời gian dựng/giải và RSS; encoding nào có sự đánh đổi tốt nhất trên bộ mẫu?
+\item \textbf{So sánh SAT trung bình với các cấu hình đối chứng.} Trung bình hiệu năng của bốn SAT encoding so với CPLEX MIP, Gurobi MIP, CP Optimizer và CP-SAT ra sao khi tính đồng thời thời gian và các lượt quá hạn?
+\item \textbf{Đánh giá SAT cố định tốt nhất.} Nếu chọn một encoding duy nhất có PAR2-total thấp nhất trên toàn bộ mẫu, cấu hình ấy có lợi thế ở những kích thước, nhóm độ khó và tiêu chí bộ nhớ nào so với bốn cấu hình đối chứng?
+\end{enumerate}
+RQ2 dùng SATmean, tức trung bình điểm PAR2-total của bốn cấu hình SAT có trọng số bằng nhau; RQ3 dùng một encoding cố định cho mọi đề, không chọn lại theo từng trường hợp. Việc chọn và đánh giá encoding tốt nhất cùng dựa trên dữ liệu khảo sát, nên kết luận RQ3 mang tính mô tả và cần được xác nhận trên tập kiểm tra riêng. Thực nghiệm sử dụng 90 đề ở ba kích thước, lặp ba lần với giới hạn pha giải 60 giây; phần~7 trình bày đầy đủ quy trình đo. Phần~8 lần lượt trả lời RQ1--RQ3, bao gồm cả các điều kiện làm thay đổi cách diễn giải thứ hạng.
+
+\newpage
+\section{Phát biểu bài toán và phân loại mô hình}
+\subsection{Mô hình toán học của Sudoku tổng quát}
+Đặt $N=b^2$, trong đó $b\ge2$ là số nguyên chỉ cạnh của một khối vuông. Các chỉ số hàng $r$ và cột $c$ thuộc $\{1,\ldots,N\}$. Đề bài là ma trận $P\in\{0,1,\ldots,N\}^{N\times N}$; $P_{rc}=0$ biểu thị ô trống. Gọi $G=\{(r,c):P_{rc}\ne0\}$, $g=|G|$ là số gợi ý và $\mathcal B$ là tập $N$ khối, mỗi khối chứa $b^2=N$ ô. Tìm ma trận nghiệm $Y=(Y_{rc})$ thỏa các điều kiện dưới đây. Ký hiệu $\in$ chỉ quan hệ thuộc tập, $|G|$ là số phần tử của $G$, và $\forall$ nghĩa là với mọi chỉ số trong miền đã nêu:
+\begin{equation}\label{eq:sudoku}
+\begin{aligned}
+Y_{rc}&\in\{1,\ldots,N\}, &&\quad\forall r,c,\\
+Y_{rc}&=P_{rc}, &&\quad\forall(r,c)\in G,\\
+\bigl\{Y_{rc}:c=1,\ldots,N\bigr\}&=\{1,\ldots,N\}, &&\quad\forall r,\\
+\bigl\{Y_{rc}:r=1,\ldots,N\bigr\}&=\{1,\ldots,N\}, &&\quad\forall c,\\
+\bigl\{Y_{rc}:(r,c)\in B\bigr\}&=\{1,\ldots,N\}, &&\quad\forall B\in\mathcal B.
+\end{aligned}
+\end{equation}
+Đây là bài toán tìm nghiệm khả thi: một nghiệm hợp lệ là đủ. Báo cáo không tối ưu tổng chữ số, không tìm mọi nghiệm và không đo thời gian chứng minh tính duy nhất. Đầu vào phải có kích thước hợp lệ, giá trị trong miền và các gợi ý không trùng nhau trong hàng, cột hoặc khối. Kiểm tra cục bộ này không đủ kết luận đề có nghiệm; bộ giải vẫn phải xác định tính khả thi.
+
+\subsection{Giới thiệu chung về các mô hình}
+Mô hình hóa chuyển luật Sudoku thành các biến và ràng buộc mà một bộ giải có thể xử lý. Ba họ mô hình khác nhau trước hết ở kiểu đối tượng được chọn để biểu diễn quyết định; từ đó, chúng cung cấp các dạng suy luận khác nhau cho bộ giải.
+
+\textbf{SAT} (Boolean satisfiability, tính khả thỏa logic Boolean) mô tả bài toán bằng các biến Boolean và công thức logic. Với Sudoku, một biến biểu thị một lựa chọn ô--số; luật chơi được chuyển thành các clause, tức tuyển của các literal. Bộ giải tìm phép gán đúng/sai làm mọi clause cùng đúng. Việc chia một ràng buộc lớn thành những clause nào là một lựa chọn mô hình hóa, nên cùng tập nghiệm vẫn có thể dẫn đến các công thức SAT khác nhau \citep{lynce2006}.
+
+\textbf{ILP} (integer linear programming, quy hoạch tuyến tính nguyên) sử dụng biến nguyên cùng các phương trình hoặc bất phương trình tuyến tính. Biến 0--1 biểu thị việc chọn một chữ số, còn điều kiện đúng một được viết trực tiếp bằng tổng bằng 1. Cấu trúc tuyến tính cho phép bộ giải khai thác thư giãn liên tục, sau đó kết hợp với xử lý tính nguyên để tìm lựa chọn rời rạc \citep{gurobiSudoku,cplexBranch}.
+
+\textbf{CP} (constraint programming, lập trình ràng buộc) dùng biến miền hữu hạn và những ràng buộc gần với luật gốc, chẳng hạn all-different trên cả một hàng. Bộ giải thu hẹp các miền ứng viên bằng lan truyền, rồi tìm kiếm khi suy luận chưa xác định hết các ô. CP-SAT cũng nhận mô hình biến nguyên, nhưng kết hợp suy luận miền với học clause và các thành phần tuyến tính \citep{ibmCPManual,cpsat2023}. Do đó cần phân biệt \emph{mô hình khai báo} với \emph{cơ chế bên trong bộ giải}.
+
+Dùng lại đề $4\times4$ ở Hình~\ref{fig:sudoku}, xét ô $(1,2)$. SAT dùng bốn biến $x_{121},\ldots,x_{124}$ và yêu cầu đúng một biến đúng; ILP dùng bốn biến nhị phân cùng phương trình $\sum_{d=1}^{4}x_{12d}=1$; CP dùng một biến $y_{12}\in\{1,2,3,4\}$. Gợi ý $(1,1)=1$ lần lượt trở thành mệnh đề đơn vị (unit clause, chỉ có một literal) $x_{111}$, phương trình $x_{111}=1$, hoặc đẳng thức $y_{11}=1$. Hai cách đầu có 64 biến chính, còn cách thứ ba có 16 biến ô. Điều kiện ít nhất một lựa chọn đúng được viết tắt là ALO (at-least-one). PySAT là thư viện Python cung cấp giao diện gọi các bộ giải SAT; OR-Tools là bộ công cụ tối ưu hóa có chứa CP-SAT. Bảng~\ref{tab:families} tóm tắt tám cấu hình được triển khai; những số đếm cấp mô hình này chưa quyết định thời gian và bộ nhớ thực tế.
+
+\begin{reporttable}{Các họ mô hình và cấu hình thực nghiệm}{tab:families}{%
+$N$: cạnh bảng. Số trong ngoặc: số cấu hình. Chưa tính gợi ý; CP-SAT là một cấu hình lai riêng.}
+\begin{tabularx}{.85\linewidth}{|c|l|Y|>{\raggedright\arraybackslash}p{.20\linewidth}|}
+\hline
+\textbf{STT} & \textbf{Mô hình} & \textbf{Biểu diễn chính} & \textbf{Bộ giải}\\\hline
+1 & SAT (4) & $N^3$ biến Boolean; ALO và mã hóa AMO & Glucose3/PySAT\\
+2 & ILP (2) & $N^3$ biến nhị phân; các tổng bằng 1 & CPLEX, Gurobi\\
+3 & CP (1) & $N^2$ biến ô; $3N$ all-different & CP Optimizer\\
+4 & CP-SAT (1) & Biến ô và all-different; bộ giải lai & OR-Tools CP-SAT\\\hline
+\end{tabularx}
+\end{reporttable}
+
+
+\section{Mô hình SAT}
+\subsection{Biến và ràng buộc}
+Với mỗi hàng $r$, cột $c$ và chữ số $d$ trong $\{1,\ldots,N\}$, tạo biến Boolean $x_{rcd}$, đúng khi ô $(r,c)$ nhận $d$. Có $N^3$ biến chính. Trong chương trình, mỗi biến được gán một chỉ số nguyên dương:
+\begin{equation}
+\operatorname{id}(r,c,d)=\bigl((r-1)N+c-1\bigr)N+d.\label{eq:id}
+\end{equation}
+Các biến phụ của encoding được cấp phát từ chỉ số $N^3+1$ trở đi và không dùng chung giữa hai nhóm ràng buộc. Cách cấp phát này giúp tránh việc hai nhóm vô tình liên hệ qua cùng một biến phụ.
+
+Theo mô hình Sudoku Boolean \citep{lynce2006}, bốn loại nhóm cần thỏa điều kiện đúng-một là
+\begin{equation}\label{eq:groups}
+\begin{aligned}
+X^{\rm cell}_{rc}&=(x_{rc1},\ldots,x_{rcN}), & &\text{ô--chữ số},\\
+X^{\rm row}_{rd}&=(x_{r1d},\ldots,x_{rNd}), &&\text{hàng--chữ số},\\
+X^{\rm col}_{cd}&=(x_{1cd},\ldots,x_{Ncd}), &&\text{cột--chữ số},\\
+X^{\rm box}_{Bd}&=(x_{rcd})_{(r,c)\in B}, &&\text{khối--chữ số}.
+\end{aligned}
+\end{equation}
+Các nhãn cell, row, col và box lần lượt chỉ ô, hàng, cột và khối. Ví dụ $X^{\rm row}_{rd}$ yêu cầu số $d$ xuất hiện đúng một lần trên hàng $r$. Mỗi loại có $N^2$ nhóm, mỗi nhóm dài $N$; toàn mô hình có $4N^2$ nhóm. Với một nhóm $U=(u_1,\ldots,u_m)$ gồm $m$ biến Boolean, đặt
+\begin{equation}\label{eq:eo}
+\begin{aligned}
+\ALO(U)&=u_1\lor\cdots\lor u_m,\\
+\AMO(U)&:\quad \sum_{i=1}^{m}u_i\le1,\\
+\EO(U)&=\ALO(U)\land\AMO(U).
+\end{aligned}
+\end{equation}
+ALO (at-least-one) đảm bảo ít nhất một lựa chọn đúng; AMO đảm bảo nhiều nhất một; EO (exactly-one) là điều kiện đúng một. Các toán tử $\neg$, $\lor$ và $\land$ lần lượt biểu thị phủ định, phép ``hoặc'' và phép ``và''; $\bigwedge$ là hội trên toàn bộ chỉ số được ghi. Khi tính tổng các biến Boolean, quy ước đúng bằng 1 và sai bằng 0. Tổng trong~(\ref{eq:eo}) chỉ diễn tả ý nghĩa của AMO; để gửi cho bộ giải SAT, ta phải chuyển nó thành CNF.
+
+Gọi $\mathcal X$ là danh sách $4N^2$ nhóm, $X$ là tập mọi biến chính $x_{rcd}$, $e$ là encoding được chọn và $Z$ là tập các biến phụ. Công thức cuối cùng là
+\begin{equation}\label{eq:cnf}
+F_e(X,Z)=\bigwedge_{U\in\mathcal X}
+\Bigl[\ALO(U)\land\AMO_e\bigl(U,Z_U\bigr)\Bigr]
+\land\bigwedge_{(r,c)\in G}x_{r,c,P_{rc}}.
+\end{equation}
+Ở đây $Z_U$ chứa các biến phụ riêng của $U$. Phần gợi ý là các mệnh đề đơn vị, mỗi clause có một literal. Cả bốn cấu hình giữ nguyên ALO, tập nhóm Sudoku và các gợi ý; thành phần thay đổi là cách sinh CNF cho AMO.
+
+\subsection{Bốn cách mã hóa at-most-one}
+Xét chung một nhóm $U=(u_1,\ldots,u_m)$, với $m=N$ trong thực nghiệm. Ký hiệu $A_e(m)$ và $C_e(m)$ là số biến phụ và số clause của \emph{riêng phần AMO}; chưa tính clause ALO. Mỗi encoding cần bảo toàn điều kiện
+\begin{equation}\label{eq:amo-equivalence}
+\AMO(U)\quad\Longleftrightarrow\quad
+\exists Z_U\;\AMO_e(U,Z_U).
+\end{equation}
+Ký hiệu $\exists Z_U$ có nghĩa là tồn tại một phép gán cho các biến phụ trong $Z_U$. Vì vậy các lựa chọn hợp lệ trên biến chính đều mở rộng được sang biến phụ, còn hai biến chính cùng đúng phải dẫn đến mâu thuẫn.
+
+\newpage
+\subsubsection*{a) Mã hóa Binary}
+Binary dùng các bit phụ để lưu chỉ số của lựa chọn đang đúng \citep{frisch2010}. Đặt $k=\lceil\log_2m\rceil$ và tạo $z_1,\ldots,z_k$. Gán $u_i$ mã nhị phân của $i-1$; bit là một chữ số nhị phân thuộc $\{0,1\}$. Ký hiệu $\beta_{ij}$ là bit thứ $j$ của mã này; $\log_2 m$ là logarit cơ số 2 của $m$; $\lceil a\rceil$ là số nguyên nhỏ nhất không nhỏ hơn $a$. Từ đó sinh các clause
+\begin{equation}\label{eq:binary}
+\begin{aligned}
+\AMO_{\rm bin}(U,Z_U)
+ &=\bigwedge_{i=1}^{m}\bigwedge_{j=1}^{k}(\neg u_i\lor\ell_{ij}),\\
+\ell_{ij}&=\begin{cases}
+z_j,&\beta_{ij}=1,\\
+\neg z_j,&\beta_{ij}=0.
+\end{cases}
+\end{aligned}
+\end{equation}
+Mỗi clause diễn tả $u_i\Rightarrow\ell_{ij}$: nếu chọn $u_i$, toàn bộ dãy bit phải khớp mã của nó. Với $m=4$, bốn mã là $00,01,10,11$. Chọn đồng thời hai $u_i$ khác nhau sẽ buộc ít nhất một bit nhận cả hai giá trị và gây xung đột. Nếu chỉ một $u_i$ đúng, chọn đúng mã tương ứng; nếu mọi $u_i$ sai, các bit không bị ràng buộc bởi nhóm này. Do đó~(\ref{eq:amo-equivalence}) được bảo toàn.
+
+Cài đặt duyệt từng biến chính và từng vị trí bit để sinh một clause hai literal. Với $m\ge2$, số lượng là
+\begin{equation}
+A_{\rm bin}(m)=\lceil\log_2m\rceil,\qquad
+C_{\rm bin}(m)=m\lceil\log_2m\rceil.
+\end{equation}
+Binary tiết kiệm biến phụ, nhưng số clause tăng theo cả độ dài nhóm và số bit. Những mã không ứng với phần tử nào khi $m$ không phải lũy thừa của 2 được để nguyên; ALO trên biến chính vẫn buộc chọn một phần tử thực sự.
+
+\subsubsection*{b) Mã hóa Commander}
+Commander gom các lựa chọn thành nhóm nhỏ rồi áp đặt AMO trên các biến đại diện \citep{klieber2007}. Chương trình chia $U$ thành $q=\lceil m/3\rceil$ nhóm $G_1,\ldots,G_q$, mỗi nhóm tối đa ba phần tử; tạo một biến đại diện (commander) $c_a$ cho mỗi nhóm. Chỉ số $a$ và biến $c_a$ chỉ dùng cục bộ trong mã hóa này, không phải chỉ số cột của Sudoku. Ba thành phần được sinh là
+\begin{equation}\label{eq:commander}
+\begin{aligned}
+&\neg u_i\lor\neg u_j,
+&&u_i,u_j\in G_a,\ i<j,\\
+&\neg u_i\lor c_a,
+&&u_i\in G_a,\\
+&\AMO_{\rm cmd}\bigl(c_1,\ldots,c_q\bigr).
+\end{aligned}
+\end{equation}
+Hai lựa chọn đúng trong cùng nhóm bị loại bởi clause từng cặp; hai lựa chọn đúng ở hai nhóm khác nhau buộc hai commander đúng và xung đột ở cấp trên. Chiều ngược lại được chứng minh bằng cách gán $c_a=\bigvee_{u_i\in G_a}u_i$ khi AMO trên $U$ thỏa. Cài đặt chỉ thêm chiều $u_i\Rightarrow c_a$; chiều $c_a\Rightarrow\bigl(\bigvee_{u_i\in G_a}u_i\bigr)$ không cần cho tính đúng đắn của AMO này.
+
+Quá trình lặp lại trên dãy commander đến khi còn tối đa ba biến, khi đó dùng trực tiếp clause từng cặp. Vì nhóm cuối vẫn có đại diện ngay cả khi chỉ có một phần tử, phép đếm đúng với cài đặt là
+\begin{equation}\label{eq:commander-count}
+\begin{aligned}
+A_{\rm cmd}(m)&=q+A_{\rm cmd}(q),\\
+C_{\rm cmd}(m)&=m+\sum_{a=1}^{q}\binom{|G_a|}{2}+C_{\rm cmd}(q)
+\qquad(m>3),
+\end{aligned}
+\end{equation}
+trong đó $|G_a|$ là số phần tử của nhóm và $\binom n2=n(n-1)/2$ là số cặp khác nhau từ $n$ phần tử; với $A_{\rm cmd}(m)=0$ và $C_{\rm cmd}(m)=\binom m2$ khi $m\le3$. Kích thước nhóm và thứ tự gom nhóm quyết định cấu trúc phân cấp được đưa cho bộ giải.
+
+\subsubsection*{c) Mã hóa Product}
+Product gán mỗi lựa chọn vào một vị trí trên lưới hai chiều \citep{chen2010}. Chọn $p=\lceil\sqrt m\rceil$, $q=\lceil m/p\rceil$; tạo biến chọn (selector) hàng $h_1,\ldots,h_p$ và cột $v_1,\ldots,v_q$. Các kích thước $p,q$ được dùng riêng cho lưới phụ này; $\lfloor a\rfloor$ là phần nguyên dưới và $a\bmod q$ là phần dư khi chia $a$ cho $q$. Vị trí của $u_i$ được tính bằng
+\begin{equation}
+a_i=\left\lfloor\frac{i-1}{q}\right\rfloor+1,\qquad
+b_i=\bigl((i-1)\bmod q\bigr)+1.
+\end{equation}
+Sau đó thêm hai liên kết cho mỗi $u_i$ và giới hạn tối đa một selector trên từng trục:
+\begin{equation}\label{eq:product}
+\begin{aligned}
+&\neg u_i\lor h_{a_i},\qquad \neg u_i\lor v_{b_i}
+&& (1\le i\le m),\\
+&\AMO_{\rm pair}\bigl(h_1,\ldots,h_p\bigr),\qquad
+\AMO_{\rm pair}\bigl(v_1,\ldots,v_q\bigr),
+\end{aligned}
+\end{equation}
+trong đó $\AMO_{\rm pair}(w_1,\ldots,w_t)=\bigwedge_{a<b}(\neg w_a\lor\neg w_b)$. Nếu hai $u_i$ cùng đúng, hai vị trí khác nhau sẽ khác hàng hoặc khác cột, nên ít nhất một AMO trên selector bị vi phạm. Nếu chỉ một lựa chọn đúng, bật selector hàng và cột của nó là đủ để mở rộng phép gán.
+
+\Needspace{14\baselineskip}
+Ví dụ $m=4$ dùng lưới $2\times2$ trong Hình~\ref{fig:product}. Chọn $u_3$ sẽ bật $h_2,v_1$; AMO trên hai trục tắt $h_1,v_2$, từ đó loại cả ba lựa chọn còn lại.
+\begin{reportfigure}
+\centering\input{figures/product_encoding.tex}
+\caption{Mã hóa Product cho bốn lựa chọn. Mỗi biến chính liên kết với selector hàng và cột; ví dụ tô màu minh họa khi $u_3$ được chọn.}
+\label{fig:product}
+\end{reportfigure}
+Cài đặt dùng mã hóa từng cặp (pairwise) trên hai trục và không gọi Product đệ quy. Vì vậy
+\begin{equation}\label{eq:productcount}
+A_{\rm prod}(m)=p+q,\qquad
+C_{\rm prod}(m)=2m+\binom p2+\binom q2.
+\end{equation}
+Ký hiệu $O(f(m))$ mô tả một cận trên về bậc tăng trưởng theo $m$, bỏ qua hệ số hằng khi $m$ đủ lớn. Với lưới gần vuông, số biến phụ là $O(\sqrt m)$ và số clause là $O(m)$. Các ô lưới thừa không có biến chính và không làm mất nghiệm hợp lệ.
+
+\subsubsection*{d) Mã hóa Sequential}
+Sequential của Sinz chuyên biệt cho AMO dùng một chuỗi trạng thái \citep{sinz2005}. Tạo $s_1,\ldots,s_{m-1}$; trạng thái $s_i$ truyền thông tin rằng một lựa chọn trong đoạn đầu đã được bật. Các clause là
+\begin{equation}\label{eq:sequential}
+\begin{aligned}
+&\neg u_1\lor s_1,\\
+&\left.\begin{aligned}
+\neg u_i&\lor s_i,\\
+\neg s_{i-1}&\lor s_i,\\
+\neg u_i&\lor\neg s_{i-1}
+\end{aligned}\right\}\qquad 2\le i\le m-1,\\
+&\neg u_m\lor\neg s_{m-1}.
+\end{aligned}
+\end{equation}
+Nếu $u_a$ đúng, clause liên kết bật $s_a$ và các clause chuyển tiếp bật mọi trạng thái về sau; khi đó một $u_b$ đúng với $b>a$ sẽ xung đột. Với $m=4$, chẳng hạn $u_2=1$ kéo theo $s_2=s_3=1$, cấm $u_3,u_4$; các clause phía trước cũng loại $u_1$. Khi AMO thỏa, phép gán $s_i=\bigvee_{j=1}^{i}u_j$ luôn là một cách mở rộng hợp lệ. Đây là chứng minh tồn tại biến phụ, không đòi mọi trạng thái phải tương đương hai chiều với tổng tiền tố.
+
+Chuỗi gồm hai clause đầu/cuối và ba clause cho mỗi vị trí giữa. Với $m\ge2$:
+\begin{equation}
+A_{\rm seq}(m)=m-1,\qquad C_{\rm seq}(m)=3m-4.
+\end{equation}
+Cả biến phụ và clause tăng tuyến tính; thứ tự biến trong nhóm quyết định thứ tự truyền trạng thái.
+
+\subsection{Cơ chế bộ giải và so sánh các cách mã hóa}
+Bốn CNF được nạp vào cùng Glucose3 thông qua PySAT \citep{pysat2018,glucose2009}. Ở mức nguyên lý, bộ giải thực hiện lan truyền đơn vị: nếu một clause chỉ còn một literal có thể đúng, literal ấy phải được gán đúng. Khi chưa xác định đủ biến, bộ giải chọn một quyết định nhánh. Nếu xuất hiện clause sai, nó phân tích xung đột, học clause mới và quay lui; clause học được giúp tránh lặp lại tổ hợp quyết định gây thất bại \citep{minisat2003}. Cố định bộ giải nền giữ cơ chế này thống nhất giữa bốn cấu hình.
+
+Từ mô hình SAT thỏa, tại mỗi ô lấy chữ số có $x_{rcd}=1$ rồi kiểm tra lại bảng Sudoku. Quan hệ~(\ref{eq:amo-equivalence}), ALO và các gợi ý đảm bảo mỗi nghiệm CNF chiếu xuống một bảng hợp lệ; mọi bảng hợp lệ cũng mở rộng được sang biến phụ. Gọi $V_e$ là tổng số biến và $K_e$ là tổng số clause đã sinh trước xử lý nội bộ, với $e$ chỉ cách mã hóa. Khi đó
+\begin{equation}\label{eq:counts}
+V_e=N^3+4N^2A_e(N),\qquad
+K_e=4N^2\bigl[1+C_e(N)\bigr]+g.
+\end{equation}
+Bảng~\ref{tab:counts} đối chiếu trực tiếp kích thước biểu diễn của các biến thể đã cài đặt.
+
+\begin{reporttable}{Kích thước CNF theo encoding và cỡ bảng}{tab:counts}{%
+Biến: $V_e$; clause: $K_e-g$ trong~(\ref{eq:counts}), chưa cộng gợi ý. Dấu phẩy phân cách hàng nghìn. Tô đậm/gạch chân: số lượng thấp nhất/thấp thứ nhì trong cùng kích thước.}
+\begin{tabular}{|c|l|c|c|c|c|c|c|}
+\hline
+\multirow{2}{*}{\textbf{STT}} & \multirow{2}{*}{\textbf{Encoding}} & \multicolumn{2}{c|}{$N=9$} & \multicolumn{2}{c|}{$N=16$} & \multicolumn{2}{c|}{$N=25$}\\\cline{3-8}
+& & Biến & Clause & Biến & Clause & Biến & Clause\\\hline
+\tableinput{tables/counts_compact.tex}\hline
+\end{tabular}
+\end{reporttable}
+
+Binary dùng ít biến phụ nhưng sinh nhiều liên kết bit; Commander tổ chức ràng buộc thành cây nhóm; Product chia lựa chọn theo hai trục; Sequential truyền trạng thái dọc một chuỗi. Nếu một biến chính đã đúng, cả bốn cấu trúc đều có thể lan truyền để loại các lựa chọn còn lại trong cùng nhóm. Tuy nhiên, toàn bộ bài toán chứa nhiều nhóm giao nhau, nên đường truyền, biến phụ và clause học được vẫn có thể khác nhau. Vì thế cần so sánh cả số biến/clause, thời gian dựng, thời gian giải, tỷ lệ hoàn tất và bộ nhớ, thay vì suy thứ hạng tốc độ chỉ từ một số đếm.
+
+\section{Mô hình ILP}
+\subsection{Biến và ràng buộc}
+Mô hình ILP dùng biến $x_{rcd}\in\{0,1\}$ với cùng ý nghĩa ô--số như SAT: giá trị 1 là chọn số $d$ tại ô $(r,c)$. Điểm khác trong cách khai báo là điều kiện đúng-một được giữ nguyên dưới dạng phương trình tổng \citep{gurobiSudoku}. Vì chỉ cần tìm một bảng hợp lệ, hàm mục tiêu là hằng số:
+\begin{equation}\label{eq:mip}
+\begin{alignedat}{2}
+\min\quad &0 &\qquad&\\
+\text{s.t.}\quad\sum_{d=1}^{N}x_{rcd}&=1, &&\forall r,c,\\
+\sum_{c=1}^{N}x_{rcd}&=1, &&\forall r,d,\\
+\sum_{r=1}^{N}x_{rcd}&=1, &&\forall c,d,\\
+\sum_{(r,c)\in B}x_{rcd}&=1, &&\forall B\in\mathcal B,\ \forall d,\\
+x_{r,c,P_{rc}}&=1, &&\forall(r,c)\in G,\\
+x_{rcd}&\in\{0,1\}, &&\forall r,c,d.
+\end{alignedat}
+\end{equation}
+Bốn họ phương trình lần lượt biểu diễn một số trên mỗi ô; một lần xuất hiện của số $d$ trên mỗi hàng; một lần trên mỗi cột; và một lần trong mỗi khối. Phương trình gợi ý cố định các giá trị đã biết. Nhờ miền 0--1, tổng bằng 1 vừa cấm chọn hai số, vừa cấm bỏ trống toàn bộ lựa chọn.
+
+Trong ví dụ $4\times4$, $x_{111}=1$ cùng $\sum_d x_{11d}=1$ buộc $x_{112}=x_{113}=x_{114}=0$. Các phương trình hàng--số, cột--số và khối--số đồng thời loại số 1 khỏi các ô liên quan. Mô hình có $N^3$ biến nhị phân và $4N^2+g$ phương trình tuyến tính. Mỗi bảng Sudoku xác định một nghiệm nguyên của hệ; ngược lại, một nghiệm nguyên của hệ chọn đúng một chữ số trên mỗi ô và thỏa tất cả luật Sudoku.
+
+\subsection{Cơ chế bộ giải}
+CPLEX và Gurobi là các bộ giải MIP có thể xử lý mô hình ILP nhị phân này. Một thành phần cơ bản là \emph{thư giãn tuyến tính}, thay miền nhị phân bằng $0\le x_{rcd}\le1$. Thư giãn chứa mọi nghiệm nguyên và có thể được xử lý bằng các kỹ thuật tuyến tính; nhưng nghiệm của nó chưa chắc là một bảng Sudoku. Chẳng hạn, với đề trống, $x_{rcd}=1/N$ thỏa cả bốn họ tổng mà chưa chọn được số cụ thể cho ô nào.
+
+Trong cơ chế phân nhánh và cắt (branch-and-cut), tiền xử lý (presolve) cố định hoặc loại các lựa chọn suy ra được từ mô hình; phương pháp tìm nghiệm kinh nghiệm (heuristic) cố tìm nghiệm nguyên, còn các bất đẳng thức cắt loại một số điểm phân số mà vẫn giữ nghiệm nguyên \citep{cplexBranch}. Khi cần phân nhánh trên một biến nhị phân đang phân số, hai trường hợp là
+\begin{equation}
+x_{rcd}=0\qquad\text{hoặc}\qquad x_{rcd}=1.
+\end{equation}
+Hai nhánh bao phủ mọi giá trị nguyên của biến. Ở mỗi nhánh, các điều kiện mới tiếp tục được truyền và thư giãn được xử lý lại; nếu nhánh không thể có nghiệm khả thi, nó được loại. Thực tế bộ giải phối hợp nhiều kỹ thuật, nên đây là mô tả nguyên lý, không khẳng định trình tự thuật toán đã xảy ra ở từng lượt chạy.
+
+Với hàm mục tiêu 0, bất kỳ nghiệm nguyên khả thi nào cũng đạt mục tiêu; bài toán không có quá trình cải thiện chất lượng bảng theo chi phí. Vì thế phép so sánh quan tâm đến thời gian tìm nghiệm và tỷ lệ giải được. Hai bộ giải nhận cùng mô hình~(\ref{eq:mip}), cùng gợi ý, một luồng và hạt giống sinh số giả ngẫu nhiên (seed) bằng 0 để giữ nguyên thiết lập ngẫu nhiên giữa các lần đo. Hàm giao tiếp giữa chương trình và bộ giải (adapter) giải mã các $x_{rcd}$ được chọn rồi kiểm tra bảng độc lập. Các khác biệt về presolve, heuristic hay cây tìm kiếm thuộc bộ giải; chỉ từ số biến/phương trình cấp giao diện lập trình ứng dụng (application programming interface, API) chưa thể quy chênh lệch hiệu năng cho một nguyên nhân nội bộ cụ thể.
+
+\section{Mô hình CP}
+\subsection{Biến và ràng buộc}
+CP biểu diễn mỗi ô bằng một biến miền hữu hạn $y_{rc}$, với miền ban đầu $D(y_{rc})=\{1,\ldots,N\}$. Gợi ý $P_{rc}\ne0$ thu hẹp miền thành $\{P_{rc}\}$. Ràng buộc toàn cục $\AD$ yêu cầu các biến trong một đơn vị nhận giá trị đôi một khác nhau:
+\begin{equation}\label{eq:cp}
+\begin{alignedat}{2}
+&y_{rc}\in\{1,\ldots,N\}, &\qquad&\forall r,c,\\
+&\AD\bigl(y_{r1},\ldots,y_{rN}\bigr), &&\forall r,\\
+&\AD\bigl(y_{1c},\ldots,y_{Nc}\bigr), &&\forall c,\\
+&\AD\bigl((y_{rc})_{(r,c)\in B}\bigr), &&\forall B\in\mathcal B,\\
+&y_{rc}=P_{rc}, &&\forall(r,c)\in G.
+\end{alignedat}
+\end{equation}
+Mỗi đơn vị có $N$ biến trong miền gồm đúng $N$ giá trị; do đó khác nhau đã buộc đơn vị ấy là một hoán vị của $1,\ldots,N$. Mô hình có $N^2$ biến, $3N$ ràng buộc all-different và $g$ đẳng thức gợi ý. Thông tin ``cả tập ô phải khác nhau'' được giữ nguyên để bộ giải khai thác, thay vì tự phân rã thành các bất đẳng thức từng cặp trong chương trình.
+
+\subsection{Cơ chế bộ giải}
+CP Optimizer được gọi qua DOcplex CP, thư viện Python của IBM dùng để khai báo và gửi mô hình CP. Cơ chế suy luận cơ bản là lan truyền miền: khi một ràng buộc loại giá trị khỏi miền của biến, những ràng buộc cùng chứa biến ấy được cập nhật tiếp; quá trình lặp đến khi không có thay đổi hoặc xuất hiện mâu thuẫn \citep{ibmCP,ibmCPManual}. Ví dụ gán một ô bằng 1 loại 1 khỏi các ô cùng hàng, cột và khối.
+
+\Needspace{18\baselineskip}
+All-different còn có thể khai thác quan hệ tập thể khi chưa biến nào được cố định. Xét $\AD\bigl(a,b,c\bigr)$ với
+\begin{equation}\label{eq:hall-example}
+D(a)=D(b)=\{1,2\},\qquad D(c)=\{1,2,3\}.
+\end{equation}
+Hai biến $a,b$ phải dùng hết hai giá trị 1 và 2, nên $c$ chỉ còn 3. Nếu chỉ xét riêng từng ràng buộc nhị phân $a\ne b$, $a\ne c$, $b\ne c$, mỗi giá trị của $c$ vẫn có hỗ trợ riêng trong từng biến kia; thông tin tập thể có thể bị bỏ lỡ. Thuật toán lọc all-different của Régin khai thác cấu trúc này bằng phép ghép cặp (matching) giữa biến và giá trị: mỗi biến được ghép với một giá trị khác nhau thuộc miền của nó \citep{regin1994}.
+\begin{reportfigure}
+\centering\input{figures/hall.tex}
+\caption{Suy luận tập thể trong all-different. Hai biến $a,b$ dành hết tập $\{1,2\}$; bỏ các cạnh nét đứt từ $c$ đến 1 và 2 sẽ giữ lại duy nhất giá trị 3.}
+\label{fig:hall}
+\end{reportfigure}
+Nếu lan truyền đã dừng nhưng vẫn còn miền nhiều phần tử, bộ giải cần phân nhánh. Một cách chia hợp lệ với $d\in D(y)$ là
+\begin{equation}
+y=d\qquad\text{hoặc}\qquad y\ne d.
+\end{equation}
+Mỗi lựa chọn kích hoạt lan truyền mới. Miền rỗng biểu thị một nhánh thất bại; nếu mọi ô đã được gán và các ràng buộc thỏa, ta có nghiệm. Khi thất bại, bộ giải quay lui để thử khả năng khác. Thực nghiệm giữ chiến lược tìm kiếm mặc định của CP Optimizer; ví dụ matching và phân nhánh giải thích nguyên lý, không xác nhận toàn bộ thuật toán lọc hay heuristic nội bộ của bộ giải trên từng đề.
+
+\subsection{Bộ giải lai CP-SAT}
+OR-Tools CP-SAT nhận cùng cấu trúc biến ô và all-different trong~(\ref{eq:cp}). Kiến trúc giải kết hợp suy luận miền, SAT và các thành phần thư giãn tuyến tính \citep{cpsat2023}. Các suy ra được giải thích bằng những literal về biến và cận; khi có xung đột, clause học được giúp ngăn các tổ hợp quyết định thất bại xuất hiện lại. Về logic, với $A,B,C$ là các mệnh đề Boolean, suy ra $(A\land B)\Rightarrow C$ có thể biểu diễn thành
+\begin{equation}
+\neg A\lor\neg B\lor C.
+\end{equation}
+Đây là ví dụ về dạng lời giải thích, không phải clause thu trực tiếp từ nhật ký thực thi (log) của thực nghiệm. Việc biên dịch all-different và quản lý các biểu diễn bên trong thuộc bộ giải, nên CP-SAT được xem là một cấu hình lai riêng khi so sánh.
+
+Hai adapter CP dùng cùng đề, miền và gợi ý, mỗi bộ giải một đơn vị thực thi tìm kiếm (worker); CP-SAT dùng seed 0 còn CP Optimizer giữ seed mặc định. FEASIBLE (đã có nghiệm khả thi) hoặc OPTIMAL (đã chứng minh tối ưu) chỉ được chuẩn hóa thành SOLVED (đã có nghiệm Sudoku hợp lệ) sau khi bảng vượt qua kiểm tra độc lập. Kết thúc do quá hạn mà chưa tìm thấy nghiệm không chứng minh đề vô nghiệm \citep{ortoolsDocs}. Dù có cùng mô hình cấp cao, hai bộ giải có thể khác chi phí biên dịch, lan truyền và tìm kiếm; đây chính là điều cấu hình thực nghiệm cần đo.
+
+\section{Bộ đề Sudoku và phân nhóm độ khó}\label{sec:data}
+\subsection{Dữ liệu đề gốc và nhãn độ khó theo khả năng suy luận}
+Nghiên cứu sử dụng \emph{Scaled Sudoku Instances} của Lagerkvist, bộ dữ liệu công khai gồm các đề gốc có nghiệm duy nhất và những biến thể tạo bằng cách thêm gợi ý từ nghiệm đã biết \citep{corpus,lagerkvist2026}. Kho nguồn lưu bảng trong tệp \code{.sdk.txt} và thông tin mô tả đi kèm (metadata) trong \code{.sdk.json}, theo định dạng dữ liệu có cấu trúc JSON (JavaScript Object Notation), gồm kích thước, số gợi ý, nhãn độ khó và nguồn gốc biến thể. Báo cáo chọn các cỡ $9\times9$, $16\times16$ và $25\times25$, phù hợp với khối vuông trong mô hình tổng quát.
+
+Nhãn của bộ dữ liệu được gắn theo cấu hình lan truyền có thể giải hoàn tất đề \emph{không dùng tìm kiếm đầy đủ}. Nguồn thử một họ cấu hình suy luận và ghi cấu hình thành công yếu nhất theo quy trình phân loại. Vì vậy nhãn phản ánh nhu cầu suy luận trong họ đã thử, không trực tiếp là thời gian của SAT, ILP hay CP trong báo cáo này \citep{lagerkvist2026}. Bảng~\ref{tab:original-labels} trình bày 12 nhãn liên quan đến bộ mẫu được chọn.
+
+\begin{reporttable}{Nhãn độ khó gốc theo khả năng lan truyền}{tab:original-labels}{%
+Nguồn: \citet{corpus,lagerkvist2026}. Val: lan truyền giá trị; Bnd: lan truyền cận; Dom: lan truyền miền. BS (bounds shaving): thử cận; DS (domain shaving): thử toàn miền; Chan (channeling): liên kết biểu diễn. UNSOLVED: chưa giải được chỉ bằng các cấu hình lan truyền đã thử; không có nghĩa là vô nghiệm.}
+\begin{tabularx}{.70\linewidth}{|c|l|Y|}
+\hline
+\textbf{STT} & \textbf{Nhãn} & \textbf{Diễn giải}\\\hline
+1 & Val & Lan truyền giá trị.\\
+2 & ValBS & Val kết hợp bounds shaving.\\
+3 & ValDS & Val kết hợp domain shaving.\\
+4 & ValChan & Val thêm liên kết biểu diễn.\\\hline
+5 & Bnd & Lan truyền cận.\\
+6 & BndBS & Bnd kết hợp bounds shaving.\\
+7 & BndDS & Bnd kết hợp domain shaving.\\
+8 & BndChan & Bnd thêm liên kết biểu diễn.\\\hline
+9 & Dom & Lan truyền miền.\\
+10 & DomBS & Dom kết hợp bounds shaving.\\
+11 & DomDS & Dom kết hợp domain shaving.\\\hline
+12 & UNSOLVED & Chưa cấu hình lan truyền được ghi nhận nào giải hoàn tất.\\\hline
+\end{tabularx}
+\end{reporttable}
+
+\textbf{Ba mức lan truyền cơ sở.} Với biến $y$, miền $D(y)$ là tập giá trị hiện còn có thể gán. Val, Bnd và Dom chỉ ba mức nhất quán của ràng buộc all-different trong hệ thống gắn nhãn \citep{gecode,gecodeModeling}:
+\begin{itemize}[leftmargin=1.4em,itemsep=4pt]
+\item \textbf{Val (value propagation):} lan truyền từ các biến đã được gán một giá trị duy nhất. Giá trị đó bị loại khỏi miền của các biến còn lại trong cùng hàng, cột hoặc khối. Mức này khai thác trực tiếp sự kiện một giá trị đã được sử dụng, nhưng chưa yêu cầu kiểm tra hỗ trợ đồng thời cho mọi lựa chọn chưa được cố định.
+\item \textbf{Bnd (bounds consistency):} tập trung vào cận dưới và cận trên của miền. Một cận được giữ phải có cách gán thỏa ràng buộc khi các biến còn lại được xét qua khoảng nguyên giữa hai cận của chúng. Nếu không có hỗ trợ, cận được đẩy vào trong. Thông tin về các khoảng giá trị bị chiếm có thể tạo suy luận mới ngay cả khi chưa biến nào được gán đơn, nhưng cách xét khoảng chưa khai thác đầy đủ các lỗ trong miền.
+\item \textbf{Dom (domain consistency):} yêu cầu từng giá trị còn giữ trong miền có hỗ trợ: phải tồn tại một phép gán cho các biến còn lại, dùng giá trị thuộc chính các miền hiện thời, sao cho all-different thỏa. Vì kiểm tra cả giá trị ở giữa miền, mức này có thể loại những ứng viên mà kiểm tra cận chưa loại được. Đổi lại, việc lọc miền có thể tốn nhiều công sức hơn ở mỗi lần cập nhật.
+\end{itemize}
+Các mức trên mô tả năng lực suy luận của từng ràng buộc. Một giá trị có hỗ trợ trong một hàng chưa được bảo đảm tham gia vào nghiệm của toàn bảng, vì nó vẫn phải tương thích với cột, khối và những ô khác. Lan truyền mạnh hơn vì thế không đồng nghĩa luôn giải nhanh hơn hoặc không cần tìm kiếm \citep{regin1994}.
+
+\textbf{Shaving (lọc miền bằng phép thử gán đơn).} Kỹ thuật này thử tạm $y=d$ rồi chạy lan truyền. Gọi $\mathcal C$ là tập ràng buộc đang xét, $\operatorname{Prop}$ là phép lan truyền và $\bot$ là mâu thuẫn. Nếu giả thiết tạo mâu thuẫn, $d$ bị loại khỏi miền thật:
+\begin{equation}
+\operatorname{Prop}\Bigl(\mathcal C\cup\{y=d\}\Bigr)=\bot
+\quad\Longrightarrow\quad D(y)\leftarrow D(y)\setminus\{d\}.
+\end{equation}
+Bounds shaving (BS) thử các cận; domain shaving (DS) thử giá trị trên toàn miền \citep{corpus}. Một phép thử không gây mâu thuẫn chưa chứng minh giả thiết đó mở rộng được thành nghiệm hoàn chỉnh. Do đó shaving có thao tác giả định nhưng vẫn khác việc duyệt đầy đủ cây tìm kiếm.
+
+\textbf{Channeling.} Các ràng buộc này nối hai biểu diễn tương đương để một suy ra ở biểu diễn này truyền sang biểu diễn kia. Ví dụ biến $y_{rc}$ chỉ số ở ô, còn $p_{rd}$ chỉ cột chứa số $d$ trong hàng $r$, có quan hệ
+\begin{equation}
+y_{rc}=d\quad\Longleftrightarrow\quad p_{rd}=c.
+\end{equation}
+Nhãn Chan trong nguồn bổ sung quan hệ xuất hiện giá trị trên hàng, cột và khối \citep{lagerkvist2026}; công thức trên minh họa ý tưởng. Mức lan truyền và kỹ thuật bổ sung là hai thành phần của nhãn, nên không nên xem danh sách như một chuỗi mạnh--yếu tuyệt đối. Đặc biệt, UNSOLVED chỉ nói họ suy luận đã thử chưa giải được đề khi không tìm kiếm; nó không đồng nghĩa UNSAT (unsatisfiable, đã chứng minh vô nghiệm). Nguồn vẫn xây dựng các đề có nghiệm duy nhất và dùng tên Search (cần tìm kiếm) cho nhóm dự phòng tương ứng trong bài viết.
+
+\subsection{Xây dựng bộ thực nghiệm và phân tầng độ khó}
+Để so sánh đồng đều theo kích thước và khả năng suy luận, nghiên cứu gộp nhãn gốc thành ba nhóm Dễ, Vừa và Khó như Bảng~\ref{tab:tiers}. Quy tắc dựa trên phần lan truyền cơ sở của nhãn, đồng thời đặt UNSOLVED vào nhóm Khó. Đây là quy ước tổ chức mẫu của báo cáo; nhãn gốc được giữ nguyên để truy xét các khác biệt bên trong mỗi nhóm.
+
+\begin{reporttable}{Quy tắc gộp nhãn thành ba tầng thực nghiệm}{tab:tiers}{%
+Quy tắc của nghiên cứu để cân bằng mẫu; không thay thế nhãn gốc hoặc khẳng định thứ tự thời gian cho mọi cặp đề.}
+\begin{tabular}{|c|c|l|}
+\hline
+\textbf{STT} & \textbf{Nhóm} & \textbf{Nhãn gốc}\\\hline
+1 & Dễ & Val, ValBS, ValDS, ValChan\\
+2 & Vừa & Bnd, BndBS, BndDS, BndChan\\
+3 & Khó & Dom, DomBS, DomDS, UNSOLVED\\\hline
+\end{tabular}
+\end{reporttable}
+
+Với mỗi kích thước, chọn 10 đề trong từng nhóm, tạo bộ mẫu $3\times3\times10=90$ đề. Số lượng cho từng nhãn gốc được ấn định trước theo Bảng~\ref{tab:data}, sau đó chọn ngẫu nhiên trong từng tầng với seed 20261015. Mỗi đề trong mẫu có một đề gốc khác nhau, tránh để nhiều biến thể của cùng đề ban đầu xuất hiện ở các tầng khác nhau. Bảng danh mục đề (manifest) giữ mã định danh (identifier, ID), nhãn, số gợi ý, đường dẫn nguồn và mã băm SHA-256 (dấu vân tay số để đối chiếu nội dung tệp) của mỗi đề.
+
+\begin{reporttable}{Thành phần bộ thực nghiệm 90 đề}{tab:data}{%
+Mỗi hàng có 10 đề. Gợi ý là khoảng nhỏ nhất--lớn nhất trong tầng; nhãn và số đề được giữ theo manifest.}
+\begin{tabularx}{.82\linewidth}{|c|c|c|c|Y|}
+\hline
+\textbf{STT} & $N$ & \textbf{Nhóm} & \textbf{Gợi ý} & \textbf{Nhãn: số đề}\\\hline
+\tableinput{tables/dataset_numbered.tex}
+\hline
+\end{tabularx}
+\end{reporttable}
+
+Thành phần mẫu gồm 30 đề gốc ở $9\times9$; 10 đề gốc và 20 biến thể ở $16\times16$; 3 đề gốc và 27 biến thể ở $25\times25$. Các biến thể chỉ thêm gợi ý từ nghiệm có sẵn, nên giữ được nguồn gốc truy xuất \citep{corpus}. Sự kết hợp này tạo đủ các tầng để so sánh, nhưng tỷ lệ Dễ/Vừa/Khó của mẫu không đại diện cho tỷ lệ tương ứng trong toàn bộ dữ liệu nguồn.
+
+Hai giới hạn cần giữ khi đọc kết quả là Dom và UNSOLVED cùng nằm trong nhóm Khó nhưng khác khả năng giải bằng lan truyền, và số gợi ý thay đổi giữa các tầng. Vì vậy kích thước, mật độ gợi ý và nhãn chưa được tách thành những yếu tố hoàn toàn độc lập. Nghiên cứu kiểm tra nghiệm mà từng bộ giải trả về; tính duy nhất của toàn bộ đề dựa trên thông tin nguồn, không được chứng minh lại trong lượt thực nghiệm. Các nhãn và ID gốc cho phép quay lại từng trường hợp khi các số trung bình che khuất khác biệt.
+
+\section{Thiết kế thực nghiệm và chỉ số đánh giá}
+\subsection{Môi trường và quy trình thực nghiệm}
+Thực nghiệm ngày 15/10/2026 dùng Intel Core i7-13700H, 20 bộ xử lý logic (logical CPU; CPU là central processing unit, bộ xử lý trung tâm), RAM vật lý khoảng 32 GiB (gibibyte, $1\,\mathrm{GiB}=2^{30}$ byte), Windows 11 build 26200 và Python 3.12.7. Phiên bản thư viện ghi trong metadata: python-sat 1.9.dev15, OR-Tools 9.15.6755, DOcplex 2.32.264, CPLEX Python 22.2.0.1, gurobipy 13.0.3 và psutil 7.2.2. CP Optimizer được gọi từ IBM ILOG CPLEX Optimization Studio 22.2; metadata chưa lưu riêng chuỗi phiên bản đầy đủ của tệp thực thi CP.
+
+Mỗi đề được chạy bằng tám cấu hình, mỗi cấu hình lặp ba lần, tổng cộng $90\times8\times3=2160$ lượt. Mỗi lượt có tiến trình Python mới; các lượt chạy tuần tự, không cạnh tranh chủ động với một lượt thực nghiệm khác. Bộ giải được giới hạn một luồng/worker; thứ tự phương pháp trong từng vòng lặp được xáo trộn bằng seed phụ thuộc vị trí đề trong manifest. Các lần lặp giữ nguyên seed bộ giải (CP Optimizer dùng mặc định), nên đây là phép đo lặp thời gian, không phải ba mẫu ngẫu nhiên độc lập của thuật toán.
+
+Một lượt thực nghiệm so sánh được gọi là một lượt benchmark. Quy trình gồm: đọc và kiểm tra đề; dựng mô hình; gọi giải với hạn 60 giây; giải mã; kiểm tra độc lập từng hàng, cột, khối và gợi ý; lưu kết quả JSONL (JSON Lines, mỗi dòng là một đối tượng JSON). Trạng thái chuẩn là SOLVED (đã tìm và kiểm tra nghiệm), UNSAT (đã chứng minh vô nghiệm), TIMEOUT (quá hạn khi chưa có nghiệm) hoặc ERROR (lỗi chạy, môi trường hoặc nghiệm không hợp lệ). Trong lượt chạy này không có UNSAT và ERROR. Việc có 2.120 nghiệm đúng xác nhận tính hợp lệ trên các trường hợp đã giải; không thay thế chứng minh mô hình hay kiểm thử đầy đủ mọi đầu vào.
+
+\subsection{Phép đo thời gian thực thi và bộ nhớ (RSS)}\label{sec:measurement}
+Các đại lượng thời gian được ghi bằng đồng hồ đo thời gian trôi qua đơn điệu, không bị thay đổi khi chỉnh giờ hệ thống. Ký hiệu $t^{\rm build}$ là thời gian dựng, $t^{\rm solve}$ là thời gian giải, $t^{\rm model}$ là tổng hai pha và $t^{\rm wall}$ là thời gian thực từ đầu đến cuối một lượt:
+\begin{equation}
+t^{\rm model}=t^{\rm build}+t^{\rm solve},\qquad
+t^{\rm wall}=\text{thời gian hoàn tất toàn bộ một lượt tiến trình}.\label{eq:time}
+\end{equation}
+$t^{\rm build}$ đo tạo mô hình qua API; với SAT còn bao gồm nạp CNF vào bộ giải. $t^{\rm solve}$ đo lời gọi giải và giải mã; các adapter có ranh giới nội bộ khác nhau. Ví dụ SAT tính kiểm tra nghiệm trong khoảng đo giải, trong khi một số adapter kiểm tra sau khi chốt thời gian; CP Optimizer có khởi động và truyền mô hình cho tệp thực thi trong lời gọi giải. Vì vậy đây là thời gian của adapter, không phải riêng thời gian bộ xử lý (CPU time) của bộ giải. Tổng $t^{\rm model}$ giảm ảnh hưởng của cách chia dựng/giải, nhưng không bao gồm mọi lần nạp thư viện. $t^{\rm wall}$ còn gồm khởi động Python, nạp thư viện, giao tiếp và dọn tài nguyên.
+
+Giới hạn 60 giây áp dụng cho pha giải bằng cơ chế giới hạn thời gian của bộ giải hoặc bộ hẹn giờ ngắt SAT. Không có hạn cứng 60 giây cho toàn bộ tiến trình. Một số thời gian đo có thể vượt 60 giây do ranh giới API và xử lý sau khi dừng. Không được thay $t^{\rm wall}$ bằng $t^{\rm model}$ khi ước lượng thời gian chạy cả lô đề.
+
+RAM được đo bằng psutil; RSS trên Windows tương ứng với working set, tập trang bộ nhớ của tiến trình đang nằm trong RAM \citep{psutil}. Với $t$ là thời điểm đo, $\mathcal T(t)$ là tập tiến trình của một lượt gồm tiến trình giải và các tiến trình con đang tồn tại. Đặt $\operatorname{RSS}_p(t)$ là RSS của tiến trình $p$ tại $t$ và $\mathcal S$ là tập thời điểm lấy mẫu. Đỉnh bộ nhớ quan sát được $\widehat M_{\rm peak}$ được tính bằng:
+\begin{equation}
+\widehat M_{\rm peak}=\max_{t\in\mathcal S}\sum_{p\in\mathcal T(t)}\operatorname{RSS}_p(t),\qquad
+1\ \mathrm{MiB}=2^{20}\ \text{byte}.\label{eq:rss}
+\end{equation}
+MiB (mebibyte) bằng $2^{20}$ byte; ms là mili giây ($10^{-3}$ giây). Chương trình chờ mục tiêu 10 ms giữa các lần quét; việc đọc cây tiến trình làm khoảng cách thực lớn hơn. Giá trị này có thể bỏ sót đỉnh ngắn, gồm cả môi trường thực thi Python/thư viện, và có thể đếm lặp trang chia sẻ giữa tiến trình. Nó đo chi phí triển khai quan sát được, không phải riêng bộ nhớ CNF hay độ phức tạp không gian lý thuyết. Tiến trình giám sát bên ngoài không được cộng vào cây của worker.
+
+\subsection{Xử lý quá hạn (Timeout) và chỉ số phạt PAR2}\label{sec:timeout}
+Nếu chỉ lấy trung bình các lượt SOLVED, phương pháp bỏ cuộc ở đề khó có thể được đánh giá quá tốt. Báo cáo luôn đi kèm số lượt giải thành công và dùng cách phạt PAR2, trong đó mỗi timeout được tính bằng hai lần hạn thời gian, theo nguyên tắc của SAT Competition \citep{par2}. Gọi $\mathcal R$ là tập lượt đang tổng hợp, $a\in\mathcal R$ là một lượt và $\tau=60$ giây là hạn pha giải. Điểm pha giải $p_2(a)$, điểm cộng dựng $q_2(a)$ và trung bình trên tập lượt được định nghĩa bởi:
+\begin{align}
+p_2(a)&=\begin{cases}
+t^{\rm solve}_a,&\text{nếu lượt }a\text{ là SOLVED},\\[2pt]
+2\tau,&\text{nếu lượt }a\text{ là TIMEOUT},
+\end{cases}\label{eq:par2}\\
+q_2(a)&=t^{\rm build}_a+p_2(a),\label{eq:scoretotal}\\
+\PAR(\mathcal R)&=\frac{1}{|\mathcal R|}\sum_{a\in\mathcal R}q_2(a).\label{eq:partotal}
+\end{align}
+$|\mathcal R|$ là số lượt trong tập; $\operatorname{mean}(p_2)$ là trung bình cộng các điểm $p_2(a)$, tức PAR2 cho pha giải. Chỉ số $\PAR$ là phần mở rộng được định nghĩa ở đây để tính thêm dựng mô hình; nó không phải PAR2 với hạn 60 giây cho toàn bộ tiến trình. Giá trị 120 giây là điểm phạt, không phải thời gian hoàn thành được ước đoán cho một đề timeout. Với ERROR cần chẩn đoán và báo riêng, không tự coi là timeout; tập dữ liệu hiện tại không gặp trường hợp đó.
+
+Trong mỗi nhóm, trước hết lấy trung bình ba lần lặp cho từng đề, sau đó lấy trung bình các đề. Vì thiết kế cân bằng, kết quả bằng trung bình trực tiếp 30 lượt; tuy nhiên số đơn vị đề độc lập vẫn là 10. Trung vị $t^{\rm model}$ chỉ dùng lượt SOLVED và được ghi rõ. RAM lấy trên tất cả lượt có phép đo, gồm cả timeout. Chỉ số gộp toàn tập cho trọng số bằng nhau giữa chín tổ hợp kích thước--nhóm. Các bảng số liệu dùng dấu chấm thập phân.
+
+Để trả lời RQ2 và RQ3, đặt $E$ là tập bốn encoding; $\mathcal R_e$ là tập mọi lượt của encoding $e$ và viết gọn $\PAR(e)=\PAR(\mathcal R_e)$. Khi đó:
+\begin{equation}
+\operatorname{SATmean}=\frac{1}{4}\sum_{e\in E}\PAR(e),\qquad
+e^*\in\operatorname*{arg\,min}_{e\in E}\PAR(e).\label{eq:satmean}
+\end{equation}
+SATmean là thống kê của bốn cấu hình, không phải thời gian của một bộ giải mới hay một danh mục bộ giải (portfolio) chạy nhiều cấu hình. $e^*$ là một encoding cố định đạt điểm thấp nhất trên toàn bộ kết quả quan sát; phép arg min trả về tập các lựa chọn đạt cực tiểu, và sẽ chọn một phần tử theo quy tắc cố định nếu đồng hạng. Dấu gạch trên $\overline t$ chỉ trung bình cộng; dấu ngã $\widetilde t$ hoặc $\widetilde M$ chỉ trung vị. Ký hiệu $\widetilde M$ dùng cho trung vị các đỉnh RSS quan sát được, còn $\widehat M_{\rm peak}$ là đỉnh của một lượt. Không chọn encoding nhanh nhất riêng cho từng đề rồi coi đó là thuật toán triển khai được. Vì việc chọn $e^*$ và đánh giá cùng dùng một tập dữ liệu, kết quả của $e^*$ mang tính mô tả, cần tập kiểm tra riêng để xác nhận khả năng tổng quát.
+
+\clearpage
+\section{Kết quả và thảo luận}
+Toàn bộ 2.160 lượt chạy tạo 2.120 nghiệm hợp lệ và 40 lượt quá hạn; không có ERROR hoặc UNSAT. Các trường hợp quá hạn đều thuộc nhóm Khó, trong đó 37 lượt ở $25\times25$ và ba lượt ở $16\times16$. Phần này dùng cùng dữ liệu để trả lời lần lượt ba RQ. PAR2-total là chỉ số chính về khả năng xử lý toàn mẫu trong hạn pha giải 60 giây; trung vị thời gian và RSS bổ sung thông tin về trường hợp điển hình và chi phí bộ nhớ.
+
+\Needspace{22\baselineskip}
+\subsection{RQ1: Bốn SAT encoding đánh đổi hiệu năng như thế nào?}
+\textbf{Product cho sự đánh đổi tốt nhất trong nhóm SAT trên bộ mẫu này.} Nó là encoding duy nhất giải đủ mọi lượt và có PAR2-total thấp nhất, trong khi trung vị RSS gần mức nhỏ nhất (Bảng~\ref{tab:rq1}). Kết quả này cho thấy lựa chọn encoding có thể ảnh hưởng trực tiếp đến khả năng hoàn tất, ngay cả khi tất cả cấu hình dùng chung biến chính, ràng buộc Sudoku và bộ giải Glucose3.
+
+\begin{reporttable}{So sánh bốn SAT encoding trên toàn bộ mẫu}{tab:rq1}{%
+Đơn vị: giây, MiB. $\overline t^{\rm build}$: dựng trung bình; $\widetilde t^{\rm model}$: trung vị dựng+giải (SOLVED); $\widetilde M$: trung vị đỉnh RSS (mọi lượt). Đậm/gạch chân: tốt nhất/nhì trong SAT; SOLVED cao, thời gian/RSS thấp là tốt. Xếp theo số gốc.}
+\begin{tabular}{|c|l|c|c|c|c|c|}
+\hline
+\textbf{STT} & \textbf{Encoding} & \textbf{SOLVED} & $\overline t^{\rm build}$ & $\widetilde t^{\rm model}$ & $\PAR$ & $\widetilde M$\\\hline
+\tableinput{tables/rq1_sat.tex}\hline
+\end{tabular}
+\end{reporttable}
+
+Hai tiêu chí thời gian dẫn đến những cách đọc khác nhau. Sequential có thời gian dựng và trung vị tổng thời gian thấp hơn Product một chút, nhưng ba timeout làm điểm PAR2-total tăng đáng kể. Do trung vị chỉ dùng lượt SOLVED, nó không đại diện cho chi phí xử lý toàn bộ bộ đề khi tỷ lệ hoàn tất khác nhau. Binary nằm giữa về PAR2-total và có một timeout; Commander và Sequential mỗi encoding có ba. Vì vậy ưu thế chính của Product là xử lý được cả phần đuôi khó trong hạn, thay vì chỉ thắng ở mức vài mili giây trên các lượt thông thường.
+
+Kích thước CNF chỉ giải thích một phần của kết quả. Ở $N=25$, Binary có ít biến nhất nhưng nhiều clause hơn Product, nên tiết kiệm biến không kéo theo chi phí dựng thấp nhất. Commander và Product có cùng số clause ở kích thước này nhưng PAR2-total toàn tập khác nhau rõ rệt; cấu trúc liên kết giữa các biến và đường lan truyền vì thế vẫn là yếu tố cần xét bên cạnh số đếm (Bảng~\ref{tab:counts}). Hình~\ref{fig:satcost} cho thấy chi phí dựng và RSS tăng theo kích thước, đồng thời các encoding tạo những mức chi phí khác nhau ngay trước khi bàn đến thời gian tìm kiếm.
+\begin{reportfigure}
+\centering\input{figures/sat_cost.tex}
+\caption{Chi phí của bốn SAT encoding theo kích thước: (a) thời gian dựng mô hình trung bình; (b) trung vị đỉnh RSS. Chú giải chung nằm dưới hai biểu đồ. Mỗi điểm tổng hợp 90 lượt.}
+\label{fig:satcost}
+\end{reportfigure}
+\Needspace{6\baselineskip}
+Về bộ nhớ, Commander có RSS trung vị thấp nhất nhưng chỉ thấp hơn Product khoảng 0,1 MiB trên toàn tập; khoảng cách nhỏ này không tạo ưu thế thực dụng rõ ràng để bù cho các lượt chưa hoàn tất. Cũng không thể quy mọi khác biệt RSS cho số biến phụ, vì phép đo gồm môi trường thực thi Python và bộ giải. RQ1 do đó ủng hộ Product theo tiêu chí kết hợp khả năng giải đủ, PAR2-total và RSS của cài đặt hiện tại; nó không thiết lập một định luật rằng Product luôn tốt nhất trên mọi tập Sudoku hoặc SAT bộ giải.
+
+\Needspace{18\baselineskip}
+\subsection{RQ2: SAT trung bình so với các cấu hình đối chứng ra sao?}
+\textbf{SATmean tốt hơn hai cấu hình MIP và CP Optimizer theo PAR2-total, nhưng kém CP-SAT.} Trung bình bốn encoding đạt 1,193 giây, trong khi CP-SAT đạt 0,711 giây; theo chỉ số này, SATmean cao hơn CP-SAT khoảng 67,7\% (Bảng~\ref{tab:rq2}). Tỷ lệ hoàn tất cũng cho cùng hướng so sánh: nhóm SAT đạt 99,35\%, cao hơn ba đối chứng còn lại nhưng thấp hơn CP-SAT giải đủ mẫu.
+
+\begin{reporttable}{SATmean và bốn cấu hình đối chứng}{tab:rq2}{%
+SATmean: gộp đều bốn encoding (1.080 lượt); đối chứng: 270 lượt. SOLVED là tỷ lệ phần trăm. Đậm/gạch chân: tốt nhất/nhì theo cột; tỷ lệ cao, PAR2-total thấp là tốt.}
+\begin{tabular}{|c|l|c|c|}
+\hline
+\textbf{STT} & \textbf{Cấu hình/thống kê} & \textbf{SOLVED} & $\PAR$ (s)\\\hline
+\tableinput{tables/rq2_sat_mean.tex}\hline
+\end{tabular}
+\end{reporttable}
+
+Khoảng cách trên chịu ảnh hưởng lớn của những lượt quá hạn. Bảy timeout của bốn SAT encoding đóng góp riêng 0,778 giây vào SATmean, xấp xỉ 65,2\% điểm 1,193 giây; phần còn lại là chi phí dựng và các thời gian giải thành công. Do đó CP-SAT không chỉ có lợi thế về tốc độ điển hình, mà còn tránh được phần phạt này. Tương tự, PAR2-total cao của các cấu hình MIP và CP Optimizer phản ánh nhiều lượt khó chưa hoàn tất; nó không có nghĩa mọi đề đều mất lượng thời gian gần bằng điểm trung bình đó.
+
+Theo kích thước, SATmean tăng từ khoảng 0,006 giây ở $9\times9$ lên 0,032 giây ở $16\times16$ và 3,540 giây ở $25\times25$. Hai kích thước nhỏ có nhiều lượt giải rất ngắn, nên chi phí dựng và ranh giới API chiếm tỷ lệ đáng kể. Ở bảng lớn, sự khác nhau về tỷ lệ vượt hạn trở nên quan trọng hơn. Kết luận RQ2 vì vậy là một so sánh trên hỗn hợp đề đã phân tầng, không phải tuyên bố một họ mô hình luôn giải nhanh hơn họ khác trên từng đề.
+
+SATmean cũng cần được diễn giải đúng về mặt phương pháp. Nó mô tả hiệu năng trung bình khi xem bốn encoding có trọng số bằng nhau, không phải một bộ giải mới có thể đạt trực tiếp thời gian ấy. Nhận định ``SAT tốt hơn CP-SAT'' không được hỗ trợ nếu dùng thống kê trung bình nhóm; muốn đánh giá một lựa chọn triển khai cụ thể, cần chuyển sang RQ3 và giữ nguyên một encoding cho toàn bộ đầu vào.
+
+\Needspace{18\baselineskip}
+\subsection{RQ3: SAT cố định tốt nhất có lợi thế trong điều kiện nào?}
+\textbf{Product là encoding cố định tốt nhất quan sát được theo PAR2-total toàn tập, nhưng lợi thế phụ thuộc vào phần dữ liệu được ưu tiên.} Product đạt 0,582 giây và cùng CP-SAT giải đủ 270 lượt; điểm trung bình thấp hơn CP-SAT khoảng 18,2\%. Khi tách theo kích thước (Bảng~\ref{tab:rq3size}), CP-SAT dẫn ở $16\times16$, còn Product dẫn ở $25\times25$. Chênh lệch rất nhỏ ở $9\times9$ không đủ để kết luận chắc chắn về khả năng xử lý bảng lớn.
+
+\begin{reporttable}{SAT cố định tốt nhất và đối chứng theo kích thước}{tab:rq3size}{%
+PAR2-total tính bằng giây, 90 lượt/ô. Đậm/gạch chân: thấp nhất/nhì theo hàng. Product được cố định theo tiêu chí toàn mẫu.}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+\textbf{STT} & $N$ & \makecell{SAT\\Product} & CP-SAT & \makecell{CPLEX\\MIP} & \makecell{Gurobi\\MIP} & \makecell{CP\\Optimizer}\\\hline
+\tableinput{tables/rq3_size.tex}\hline
+\end{tabular}
+\end{reporttable}
+
+Phân rã theo nhóm cho thấy vì sao trung bình toàn tập ưu tiên Product. Mười đề $25\times25$ khó, chỉ chiếm một phần chín số đề, đóng góp khoảng 94,3\% tổng thời gian dựng+giải của Product và 97,9\% của CP-SAT. Trên 80 đề còn lại, CP-SAT có trung bình khoảng 0,017 giây, thấp hơn Product 0,037 giây. Ngược lại, trên nhóm khó lớn nhất, Product có trung bình 4,936 giây so với 6,266 giây của CP-SAT (Bảng~\ref{tab:rq3hard}). Đây là nguyên nhân trực tiếp từ phân bố phép đo khiến thứ hạng trung bình toàn tập khác với thứ hạng về thời gian điển hình.
+
+\begin{reporttable}{Nhóm $25\times25$ khó: thời gian và RSS}{tab:rq3hard}{%
+30 lượt/cấu hình; thời gian (giây), RSS (MiB). Trung vị thời gian chỉ gồm SOLVED; RSS gồm mọi lượt. Đậm/gạch chân: tốt nhất/nhì theo cột. Đọc trung vị kèm SOLVED vì số lượt thành công khác nhau.}
+\begin{tabular}{|c|l|c|c|c|c|}
+\hline
+\textbf{STT} & \textbf{Cấu hình} & \textbf{SOLVED} & $\widetilde t^{\rm model}$ & $\PAR$ & $\widetilde M$\\\hline
+\tableinput{tables/rq3_hard25.tex}\hline
+\end{tabular}
+\end{reporttable}
+
+Ở nhóm này, trung vị của CP-SAT vẫn thấp hơn Product, dù trung bình cao hơn: các trường hợp chạy lâu ảnh hưởng mạnh đến trung bình. Với Gurobi, trung vị 0,173 giây chỉ mô tả 21 lượt thành công và bỏ lại chín timeout; chỉ dùng trung vị sẽ đánh giá quá thuận lợi khả năng hoàn tất của cấu hình ấy. RSS trung vị của Gurobi thấp nhất, nhưng Product vừa giải đủ vừa dùng RSS thấp hơn CP-SAT trong cùng nhóm. Bởi vậy lựa chọn theo bộ nhớ cần đặt cạnh tỷ lệ giải được, không tách riêng thành một bảng xếp hạng chi phí duy nhất.
+\begin{reportfigure}
+\centering\input{figures/rq3_heatmap.tex}
+\caption{PAR2-total của Product và bốn đối chứng theo kích thước và nhóm độ khó. Mỗi ô gồm 30 lượt; màu dùng thang logarit (độ đậm biến đổi theo logarit của giá trị) để hiển thị cả các lượt rất ngắn và các nhóm bị ảnh hưởng bởi timeout.}
+\label{fig:heatmap}
+\end{reportfigure}
+Hình~\ref{fig:heatmap} cho thấy phân tầng dữ liệu là cần thiết: phần khó ở kích thước lớn tạo biến động hiệu năng mạnh hơn các nhóm còn lại. Nhãn nguồn hữu ích để tổ chức mẫu nhưng không dự đoán chắc chắn thời gian của từng bộ giải. Đổi hệ số phạt từ 2 sang 1 hoặc 10 trên cùng dữ liệu không làm đổi hai kết luận chính: SATmean vẫn kém CP-SAT nhưng tốt hơn ba đối chứng còn lại, và Product vẫn có điểm trung bình thấp nhất. Đây là kiểm tra độ nhạy của cách tổng hợp, không phải thử nghiệm mới với giới hạn thời gian khác.
+
+Về lựa chọn thực tế, Product phù hợp nhất với mục tiêu xử lý toàn bộ bộ mẫu hiện tại theo PAR2-total và RSS; CP-SAT là phương án cạnh tranh nếu ưu tiên phần lớn các đề ngắn hoặc một mô hình biến ô gọn ở cấp khai báo. Tuy nhiên, Product được chọn trên chính tập dùng để báo cáo kết quả, nên lợi thế này cần được kiểm tra trên dữ liệu độc lập. Mỗi tầng chỉ có 10 đề từ một nguồn, ba lần lặp giữ cùng seed, và cấu hình gần mặc định một worker; chưa có cơ sở khẳng định khác biệt có ý nghĩa thống kê hoặc xác định nguyên nhân nội bộ của bộ giải. Kết luận thời gian còn áp dụng cho $t^{\rm model}$; ứng dụng chạy tiến trình mới cho từng đề cần xét thêm $t^{\rm wall}$ và chi phí khởi động như mục~\ref{sec:measurement}.
+
+\Needspace{24\baselineskip}
+\section{Kết luận}
+Nghiên cứu cho thấy lựa chọn biểu diễn là một phần quyết định của quy trình giải Sudoku: những mô hình bảo toàn cùng tập nghiệm vẫn đưa cho bộ giải các cấu trúc suy luận khác nhau. Trong nhóm SAT, số biến hoặc số clause thấp chưa đủ dự đoán cấu hình tốt nhất. Product đạt sự đánh đổi thuận lợi nhất trên bộ mẫu khi đồng thời xét PAR2-total, khả năng hoàn tất và RSS; Sequential gần nó về thời gian điển hình, còn Binary tiết kiệm biến ở bảng lớn, nhưng các lợi thế riêng ấy chưa chuyển thành hiệu năng toàn mẫu tốt hơn.
+
+Hai cách đại diện cho nhóm SAT dẫn đến hai kết luận khác nhau và đều cần được giữ rõ. SATmean thấp hơn hai cấu hình MIP và CP Optimizer, nhưng cao hơn CP-SAT; khi cố định encoding tốt nhất quan sát được, Product lại có PAR2-total thấp hơn CP-SAT. Sự thay đổi này cho thấy một đánh giá theo tên họ ``SAT'' có thể che mất ảnh hưởng của encoding. Đồng thời, Product dẫn về trung bình toàn tập nhờ nhóm $25\times25$ khó, còn CP-SAT có trung bình thấp hơn trên 80 đề còn lại. Vì vậy một lựa chọn có ý nghĩa phải gắn với loại đầu vào và mục tiêu sử dụng: ưu tiên hoàn tất các đề khó trong hạn, thời gian điển hình hay chi phí bộ nhớ.
+
+Với thiết lập hiện tại, Product là lựa chọn triển khai được dữ liệu ủng hộ cho toàn bộ hỗn hợp đề, còn CP-SAT là đối chứng mạnh và là phương án hợp lý khi ưu tiên mô hình khai báo ngắn cùng tốc độ trên các đề thông thường. Đây là kết luận trên một bộ mẫu và một cấu hình đo cụ thể. Bước xác nhận tiếp theo cần cố định lựa chọn trên tập phát triển rồi đánh giá trên tập kiểm tra độc lập, mở rộng nguồn đề và thu thêm log tìm kiếm. Những bước đó sẽ phân biệt lợi thế bền vững của biểu diễn với tác động của phân bố dữ liệu, tham số bộ giải và cách triển khai.
+
+\section*{Dữ liệu và mã nguồn}
+Mã nguồn dự án được lưu tại \url{https://github.com/kmt74/sudoku-sat-solving}. Gói bổ sung của bản báo cáo này chứa \code{data/all-results.jsonl}, bảng danh mục 90 đề với mã định danh, nhãn nguồn và mã băm, 90 đề JSON, chương trình \code{analyze.py}, bảng số liệu tái tính và bản chụp mã nguồn trong \code{supplement/code}. Các bảng và hình được tạo trực tiếp từ dữ liệu gốc, không nhập tay số đo. Chưa xác nhận toàn bộ kết quả và thay đổi điều phối đã được công bố trên GitHub ở thời điểm soạn; cần đưa chính gói dữ liệu này vào bản phát hành nộp bài. Dữ liệu Sudoku gốc và giấy phép MIT được ghi nguồn riêng \citep{corpus}.
+
+\bibliographystyle{cas-model2-names}
+\bibliography{references}
+\end{document}

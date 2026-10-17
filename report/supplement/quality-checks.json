@@ -1,0 +1,11 @@
+{
+  "pdf_pages": 10,
+  "references": 19,
+  "undefined_citations_or_references": false,
+  "missing_glyph_warnings": false,
+  "data_validated_solutions": 2120,
+  "data_total_attempts": 2160,
+  "model_counts_match_logs": true,
+  "visual_review": "All pages contact sheet and full-size pages 1, 3, 7, 8, 9, 10; no clipping or overlaps observed.",
+  "compiler_note": "CAS keyword overlay emits an overfull zero-width-box warning; visual position is correct. Workshop bibliography entries omit unverified page ranges."
+}

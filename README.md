@@ -214,7 +214,7 @@ results/summary/          # CSV tổng hợp
 report/                   # Vị trí nguồn báo cáo LaTeX
 ```
 
-`report/main.tex` trong repo hiện là khung, chưa phải bản báo cáo thực nghiệm hoàn tất. Khi công bố báo cáo cuối, cần đưa cùng phiên bản mã, kết quả gốc, chương trình tái tính bảng/hình và hướng dẫn biên dịch.
+Bản báo cáo cuối nằm tại [`report/main.tex`](report/main.tex); tải [`report/overleaf.zip`](report/overleaf.zip) để đưa lên Overleaf và chọn **XeLaTeX**. [`report/README.md`](report/README.md) hướng dẫn biên dịch và tái tính. Gói báo cáo kèm kết quả gốc 2.160 lượt, 90 đề, chương trình phân tích và bản chụp mã tại thời điểm đo trong `report/supplement/code/`.
 
 ## 8. Kiểm thử và tái lập
 

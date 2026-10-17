@@ -1,0 +1,19 @@
+\begin{tikzpicture}[x=0.76cm,y=0.76cm, every node/.style={font=\normalsize}]
+\def\board#1#2{%
+  \begin{scope}[shift={(#1,0)}]
+  \fill[reportblue!9] (0,2) rectangle (4,3);
+  \fill[reportorange!9] (1,0) rectangle (2,4);
+  \foreach \i in {0,...,4} {\draw[gray!65,line width=.35pt] (\i,0)--(\i,4);\draw[gray!65,line width=.35pt] (0,\i)--(4,\i);}
+  \foreach \i in {0,2,4} {\draw[line width=1.1pt] (\i,0)--(\i,4);\draw[line width=1.1pt] (0,\i)--(4,\i);}
+  \node[font=\bfseries] at (2,4.46) {#2};
+  \end{scope}}
+\board{0}{Đề bài}\board{5.1}{Một nghiệm hợp lệ}
+\foreach \x/\y/\v in {0.5/3.5/1,3.5/3.5/4,1.5/2.5/4,2.5/2.5/1,1.5/1.5/1,2.5/1.5/4,0.5/.5/4,3.5/.5/1}{
+  \node[font=\bfseries] at (\x,\y) {\v};
+  \node[font=\bfseries] at (\x+5.1,\y) {\v};}
+\foreach \x/\y/\v in {1.5/3.5/2,2.5/3.5/3,.5/2.5/3,3.5/2.5/2,.5/1.5/2,3.5/1.5/3,1.5/.5/3,2.5/.5/2}{
+  \node[text=reportblue] at (\x+5.1,\y) {\v};}
+\draw[reportgreen,line width=1.2pt,rounded corners=1pt] (5.15,2.05) rectangle (7.05,3.95);
+\node[font=\footnotesize,text=reportgreen,anchor=west] at (0,-.52) {Khung xanh lá: khối $2\times2$};
+\node[font=\footnotesize,text=reportblue,anchor=west] at (5.1,-.52) {Số xanh: giá trị điền thêm};
+\end{tikzpicture}

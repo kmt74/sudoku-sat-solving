@@ -1,0 +1,2 @@
+# Preserve the exact source/data bytes covered by report/SHA256SUMS.txt.
+report/** -text

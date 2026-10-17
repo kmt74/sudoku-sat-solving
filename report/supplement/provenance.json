@@ -1,0 +1,11 @@
+{
+  "report_date": "2026-10-16",
+  "repository": "https://github.com/kmt74/sudoku-sat-solving",
+  "head": "66db303164705229033cfd76a31dd223ed54e34d",
+  "solver_models_encodings_adapters_match_commit": "66db303",
+  "current_worktree_status": "M README.md\n M data/benchmark/README.md\n M scripts/run_all.py\n M scripts/summarize.py\n M src/sudoku_bench/benchmark.py\n M src/sudoku_bench/benchmark_worker.py\n M src/sudoku_bench/isolated_run.py\n M tests/test_benchmark.py\n?? results/full-benchmark-60s.zip\n?? results/raw/full-benchmark-60s.jsonl\n?? results/raw/pilot-25x25-hard-03-60s-check.jsonl\n?? results/raw/pilot-25x25-hard-03-60s.jsonl\n?? results/raw/pilot-25x25-hard-03.jsonl\n?? results/runs/\n?? results/summary/full-benchmark-60s-by-difficulty.csv\n?? results/summary/full-benchmark-60s.csv\n?? results/summary/pilot-25x25-hard-03-60s.csv\n?? results/summary/pilot-25x25-hard-03.csv\n?? scripts/run_full_benchmark.py",
+  "snapshot_note": "Current source snapshot copied on 2026-10-16; run notes record uncommitted orchestration at run time. No solver rerun in report preparation.",
+  "dataset_commit": "a8596ccaa29587c821c1ccf29225a66a7b4d5a13",
+  "latex_template": "Elsevier cas-sc 2.4, CTAN els-cas-templates",
+  "raw_sha256": "6dda55c1818166717e399d7b8d229d5e05d42935e7bf1d1cbada8477e9f19d75"
+}
