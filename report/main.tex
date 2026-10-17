@@ -212,7 +212,7 @@ SOLVED càng lớn càng tốt; thời gian và RSS càng nhỏ càng tốt.}
 Sudoku là bài toán điền số trên một bảng vuông sao cho các giá trị không lặp trong mỗi hàng, cột và khối. Từ một tập luật ngắn gọn, bài toán tạo ra những quan hệ phụ thuộc chặt chẽ giữa các ô; khi kích thước tăng, việc tìm một phép điền đồng thời thỏa mọi điều kiện trở nên khó hơn nhiều so với kiểm tra một bảng đã hoàn chỉnh. Đặc điểm này khiến Sudoku phù hợp để nghiên cứu cách biểu diễn ràng buộc và cơ chế suy luận của các bộ giải tổng quát. Báo cáo khảo sát ba hướng mô hình hóa: tính khả thỏa logic Boolean (Boolean satisfiability, SAT), quy hoạch tuyến tính nguyên (integer linear programming, ILP) và lập trình ràng buộc (constraint programming, CP), bao gồm bộ giải lai CP-SAT kết hợp CP với SAT. Trọng tâm là bốn cách mã hóa ràng buộc nhiều nhất một lựa chọn đúng (at-most-one) trong SAT và sự đánh đổi giữa chi phí biểu diễn, tốc độ tìm nghiệm, khả năng hoàn tất trong hạn thời gian và bộ nhớ. Thực nghiệm trên nhiều kích thước và nhóm độ khó nhằm xác định khi nào một mô hình có lợi thế, giải thích sự khác nhau giữa các tiêu chí đánh giá và rút ra cơ sở lựa chọn cấu hình cho Sudoku tổng quát.
 \end{abstract}
 \begin{keywords}[Từ khóa]
-Sudoku \sep SAT \sep Exact one \sep ILP \sep CP \sep Benchmark
+Sudoku \sep SAT \sep At-most-one \sep ILP \sep CP \sep Benchmark
 \end{keywords}
 \maketitle
 
@@ -734,7 +734,7 @@ Hai cách đại diện cho nhóm SAT dẫn đến hai kết luận khác nhau v
 Với thiết lập hiện tại, Product là lựa chọn triển khai được dữ liệu ủng hộ cho toàn bộ hỗn hợp đề, còn CP-SAT là đối chứng mạnh và là phương án hợp lý khi ưu tiên mô hình khai báo ngắn cùng tốc độ trên các đề thông thường. Đây là kết luận trên một bộ mẫu và một cấu hình đo cụ thể. Bước xác nhận tiếp theo cần cố định lựa chọn trên tập phát triển rồi đánh giá trên tập kiểm tra độc lập, mở rộng nguồn đề và thu thêm log tìm kiếm. Những bước đó sẽ phân biệt lợi thế bền vững của biểu diễn với tác động của phân bố dữ liệu, tham số bộ giải và cách triển khai.
 
 \section*{Dữ liệu và mã nguồn}
-Mã nguồn dự án được lưu tại \url{https://github.com/kmt74/sudoku-sat-solving}. Gói bổ sung của bản báo cáo này chứa \code{data/all-results.jsonl}, bảng danh mục 90 đề với mã định danh, nhãn nguồn và mã băm, 90 đề JSON, chương trình \code{analyze.py}, bảng số liệu tái tính và bản chụp mã nguồn trong \code{supplement/code}. Các bảng và hình được tạo trực tiếp từ dữ liệu gốc, không nhập tay số đo. Chưa xác nhận toàn bộ kết quả và thay đổi điều phối đã được công bố trên GitHub ở thời điểm soạn; cần đưa chính gói dữ liệu này vào bản phát hành nộp bài. Dữ liệu Sudoku gốc và giấy phép MIT được ghi nguồn riêng \citep{corpus}.
+Mã nguồn dự án được lưu tại \url{https://github.com/kmt74/sudoku-sat-solving}. Gói bổ sung của bản báo cáo này chứa \code{data/all-results.jsonl}, bảng danh mục 90 đề với mã định danh, nhãn nguồn và mã băm, 90 đề JSON, chương trình \code{analyze.py}, bảng số liệu tái tính và bản chụp mã nguồn trong \code{supplement/code}. Các bảng và hình được tạo trực tiếp từ dữ liệu gốc, không nhập tay số đo. Gói dữ liệu gốc, chương trình tái tính và bản chụp mã dùng cho phép đo được công bố cùng nguồn LaTeX trong thư mục \code{report/} của kho GitHub nêu trên; hướng dẫn biên dịch và tái lập nằm trong \code{report/README.md}. Dữ liệu Sudoku gốc và giấy phép MIT được ghi nguồn riêng \citep{corpus}.
 
 \bibliographystyle{cas-model2-names}
 \bibliography{references}
